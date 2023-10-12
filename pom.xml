@@ -210,6 +210,14 @@
                         <goals>
                             <goal>jar</goal>
                         </goals>
+                        <!-- JDK8必须使用下面的配置 -->
+                        <configuration>
+                            <encoding>UTF-8</encoding>
+                            <charset>UTF-8</charset>
+                            <javadocExecutable>${java.home}/bin/javadoc</javadocExecutable>
+                            <additionalparam>-Xdoclint:none</additionalparam>
+                        </configuration>
+
                     </execution>
                 </executions>
             </plugin>
