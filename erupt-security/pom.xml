@@ -7,7 +7,7 @@
     <description>Interface data security</description>
 
     <parent>
-        <groupId>xyz.erupt</groupId>
+        <groupId>com.github.xujiaji.erupt</groupId>
         <artifactId>erupt</artifactId>
         <version>1.12.3</version>
         <relativePath>../pom.xml</relativePath>
@@ -20,7 +20,7 @@
             <optional>true</optional>
         </dependency>
         <dependency>
-            <groupId>xyz.erupt</groupId>
+            <groupId>com.github.xujiaji.erupt</groupId>
             <artifactId>erupt-upms</artifactId>
             <version>${project.parent.version}</version>
             <scope>provided</scope>

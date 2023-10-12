@@ -9,7 +9,7 @@
     <description>erupt web ui</description>
 
     <parent>
-        <groupId>xyz.erupt</groupId>
+        <groupId>com.github.xujiaji.erupt</groupId>
         <artifactId>erupt</artifactId>
         <version>1.8.2</version>
         <relativePath>../pom.xml</relativePath>

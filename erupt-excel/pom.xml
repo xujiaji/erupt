@@ -8,7 +8,7 @@
     <description>excel module</description>
 
     <parent>
-        <groupId>xyz.erupt</groupId>
+        <groupId>com.github.xujiaji.erupt</groupId>
         <artifactId>erupt</artifactId>
         <version>1.12.3</version>
         <relativePath>../pom.xml</relativePath>
@@ -20,7 +20,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>xyz.erupt</groupId>
+            <groupId>com.github.xujiaji.erupt</groupId>
             <artifactId>erupt-core</artifactId>
             <version>${project.parent.version}</version>
         </dependency>

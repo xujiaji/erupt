@@ -3,7 +3,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>xyz.erupt</groupId>
+    <groupId>com.github.xujiaji.erupt</groupId>
     <artifactId>erupt</artifactId>
     <version>1.12.3</version>
 
@@ -14,7 +14,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <erupt.groupId>xyz.erupt</erupt.groupId>
+        <erupt.groupId>com.github.xujiaji.erupt</erupt.groupId>
         <java.version>1.8</java.version>
         <spring.boot.version>2.7.10</spring.boot.version>
     </properties>
@@ -38,7 +38,7 @@
 
         <module>erupt-upms</module><!--用户权限管理-->
         <module>erupt-security</module><!--API 接口安全-->
-        <module>erupt-admin</module>
+<!--        <module>erupt-admin</module>-->
         <module>erupt-web</module><!--前端代码-->
 
         <module>erupt-tpl</module>
