@@ -114,8 +114,8 @@ public class EruptUser extends LookerSelf implements FilterHandler {
 
     @ManyToOne
     @EruptField(
-            views = @View(title = "所属组织", column = "name"),
-            edit = @Edit(title = "所属组织", type = EditType.REFERENCE_TREE, referenceTreeType = @ReferenceTreeType(pid = "parentOrg.id"))
+            views = @View(title = "所属组", column = "name"),
+            edit = @Edit(title = "所属组", type = EditType.REFERENCE_TREE, referenceTreeType = @ReferenceTreeType(pid = "parentOrg.id"))
     )
     private EruptOrg eruptOrg;
 
@@ -184,6 +184,22 @@ public class EruptUser extends LookerSelf implements FilterHandler {
             )
     )
     private Set<EruptRole> roles;
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+        name = "e_upms_user_org",
+        joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"),
+        inverseJoinColumns = @JoinColumn(name = "org_id", referencedColumnName = "id")
+    )
+    @OrderBy
+    @EruptField(
+        views = @View(title = "参与组"),
+        edit = @Edit(
+            title = "参与组",
+            type = EditType.CHECKBOX
+        )
+    )
+    private Set<EruptOrg> otherOrgs;
 
     @Column(length = AnnotationConst.REMARK_LENGTH)
     @EruptField(

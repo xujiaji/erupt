@@ -41,7 +41,7 @@ public class LookerOrg extends BaseModel {
     @EruptField(
             views = {
                     @View(title = "创建人", column = "name"),
-                    @View(title = "所属组织", column = "eruptOrg.name")
+                    @View(title = "所属组", column = "eruptOrg.name")
             },
             edit = @Edit(title = "创建人", readonly = @Readonly, type = EditType.REFERENCE_TABLE)
     )

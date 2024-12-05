@@ -36,21 +36,21 @@ public class EruptOrg extends BaseModel {
 
     @Column(length = AnnotationConst.CODE_LENGTH)
     @EruptField(
-            views = @View(title = "组织编码", sortable = true),
-            edit = @Edit(title = "组织编码", notNull = true, search = @Search(vague = true))
+            views = @View(title = "组编码", sortable = true),
+            edit = @Edit(title = "组编码", notNull = true, search = @Search(vague = true))
     )
     private String code;
 
     @EruptField(
-            views = @View(title = "组织名称", sortable = true),
-            edit = @Edit(title = "组织名称", notNull = true, search = @Search(vague = true))
+            views = @View(title = "组名称", sortable = true),
+            edit = @Edit(title = "组名称", notNull = true, search = @Search(vague = true))
     )
     private String name;
 
     @ManyToOne
     @EruptField(
             edit = @Edit(
-                    title = "上级组织",
+                    title = "上级组",
                     type = EditType.REFERENCE_TREE,
                     referenceTreeType = @ReferenceTreeType(pid = "parentOrg.id", expandLevel = 3)
             )

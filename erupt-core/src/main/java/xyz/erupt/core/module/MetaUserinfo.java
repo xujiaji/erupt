@@ -19,7 +19,7 @@ public class MetaUserinfo {
 
     private String username; //账号
 
-    private String org;  //所属组织
+    private String org;  //所属组
 
     private String post; //所属岗位
 

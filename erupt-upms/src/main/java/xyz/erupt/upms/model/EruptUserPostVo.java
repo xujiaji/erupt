@@ -38,8 +38,8 @@ public class EruptUserPostVo extends BaseModel {
 
     @ManyToOne
     @EruptField(
-            views = @View(title = "所属组织", column = "name"),
-            edit = @Edit(title = "所属组织", type = EditType.REFERENCE_TREE, referenceTreeType = @ReferenceTreeType(pid = "parentOrg.id"))
+            views = @View(title = "所属组", column = "name"),
+            edit = @Edit(title = "所属组", type = EditType.REFERENCE_TREE, referenceTreeType = @ReferenceTreeType(pid = "parentOrg.id"))
     )
     private EruptOrg eruptOrg;
 
