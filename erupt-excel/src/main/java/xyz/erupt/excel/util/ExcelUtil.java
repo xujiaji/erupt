@@ -1,5 +1,6 @@
 package xyz.erupt.excel.util;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -8,6 +9,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
+@Slf4j
 public class ExcelUtil {
 
     public static CellStyle beautifyExcelStyle(Workbook wb) {
@@ -26,15 +28,18 @@ public class ExcelUtil {
         return style;
     }
 
+    private static final String CONTENT_DISPOSITION_HEADER = "Content-Disposition";
+
     public static OutputStream downLoadFile(HttpServletRequest request, HttpServletResponse response, String fileName) {
         try {
             String headStr = "attachment; filename=" + java.net.URLEncoder.encode(fileName, StandardCharsets.UTF_8.name());
             response.setContentType("application/x-download");
-            response.setHeader("Content-Disposition", headStr);
+            response.setHeader(CONTENT_DISPOSITION_HEADER, headStr);
+            response.addHeader("Access-Control-Expose-Headers", CONTENT_DISPOSITION_HEADER);
             response.setCharacterEncoding(StandardCharsets.UTF_8.name());
             return response.getOutputStream();
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("erupt downLoad error", e);
             return null;
         }
     }

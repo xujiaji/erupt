@@ -6,7 +6,6 @@ import xyz.erupt.annotation.Erupt;
 import xyz.erupt.annotation.EruptField;
 import xyz.erupt.annotation.EruptI18n;
 import xyz.erupt.annotation.constant.AnnotationConst;
-import xyz.erupt.annotation.fun.FilterHandler;
 import xyz.erupt.annotation.sub_erupt.Filter;
 import xyz.erupt.annotation.sub_erupt.LinkTree;
 import xyz.erupt.annotation.sub_erupt.RowOperation;
@@ -18,28 +17,27 @@ import xyz.erupt.annotation.sub_field.sub_edit.BoolType;
 import xyz.erupt.annotation.sub_field.sub_edit.InputType;
 import xyz.erupt.annotation.sub_field.sub_edit.ReferenceTreeType;
 import xyz.erupt.annotation.sub_field.sub_edit.Search;
-import xyz.erupt.core.constant.MenuTypeEnum;
 import xyz.erupt.core.constant.RegexConst;
+import xyz.erupt.core.module.MetaUserinfo;
 import xyz.erupt.upms.looker.LookerSelf;
+import xyz.erupt.upms.model.filter.EruptMenuViewFilter;
 import xyz.erupt.upms.model.input.ResetPassword;
 import xyz.erupt.upms.model.input.ResetPasswordExec;
 
 import javax.persistence.*;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author YuePeng
  * date 2018-11-22.
  */
 @Entity
-@Table(name = "e_upms_user", uniqueConstraints = {
-        @UniqueConstraint(columnNames = "account")
-})
+@Table(name = "e_upms_user")
 @Erupt(
-        name = "用户配置",
+        name = "用户管理",
         dataProxy = EruptUserDataProxy.class,
         linkTree = @LinkTree(field = "eruptOrg"),
         orderBy = "EruptUser.id",
@@ -52,9 +50,9 @@ import java.util.Set;
 @EruptI18n
 @Getter
 @Setter
-public class EruptUser extends LookerSelf implements FilterHandler {
+public class EruptUser extends LookerSelf {
 
-    @Column(length = AnnotationConst.CODE_LENGTH)
+    @Column(length = AnnotationConst.CODE_LENGTH, unique = true)
     @EruptField(
             views = @View(title = "用户名", sortable = true),
             edit = @Edit(title = "用户名", desc = "登录用户名", notNull = true, search = @Search(vague = true))
@@ -107,7 +105,7 @@ public class EruptUser extends LookerSelf implements FilterHandler {
                     title = "首页菜单",
                     type = EditType.REFERENCE_TREE,
                     referenceTreeType = @ReferenceTreeType(pid = "parentMenu.id"),
-                    filter = @Filter(conditionHandler = EruptUser.class)
+                    filter = @Filter(conditionHandler = EruptMenuViewFilter.class)
             )
     )
     private EruptMenu eruptMenu;
@@ -208,7 +206,6 @@ public class EruptUser extends LookerSelf implements FilterHandler {
                     desc = "ip与ip之间使用换行符间隔，不填表示不鉴权",
                     type = EditType.TEXTAREA
             )
-
     )
     private String whiteIp;
 
@@ -228,12 +225,16 @@ public class EruptUser extends LookerSelf implements FilterHandler {
         this.setId(id);
     }
 
-    @Override
-    public String filter(String condition, String[] params) {
-        List<String> nts = new ArrayList<>();
-        nts.add(MenuTypeEnum.API.getCode());
-        nts.add(MenuTypeEnum.BUTTON.getCode());
-        return String.format("EruptMenu.type not in ('%s') or EruptMenu.type is null", String.join("','", nts));
+    public MetaUserinfo toMetaUser(){
+        MetaUserinfo metaUserinfo = new MetaUserinfo();
+        metaUserinfo.setId(this.getId());
+        metaUserinfo.setSuperAdmin(this.getIsAdmin());
+        metaUserinfo.setAccount(this.getAccount());
+        metaUserinfo.setUsername(this.getName());
+        Optional.ofNullable(this.getRoles()).ifPresent(it-> metaUserinfo.setRoles(it.stream().map(EruptRole::getCode).collect(Collectors.toList())));
+        Optional.ofNullable(this.getEruptPost()).ifPresent(it -> metaUserinfo.setPost(it.getCode()));
+        Optional.ofNullable(this.getEruptOrg()).ifPresent(it -> metaUserinfo.setOrg(it.getCode()));
+        return metaUserinfo;
     }
 
 }

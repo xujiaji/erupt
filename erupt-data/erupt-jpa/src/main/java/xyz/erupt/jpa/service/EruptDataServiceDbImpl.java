@@ -1,5 +1,6 @@
 package xyz.erupt.jpa.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -30,12 +31,14 @@ import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import javax.transaction.Transactional;
 import java.lang.reflect.Field;
+import java.sql.SQLException;
 import java.util.*;
 
 /**
  * @author YuePeng
  * date 2019-03-06.
  */
+@Slf4j
 @Service
 public class EruptDataServiceDbImpl implements IEruptDataService {
 
@@ -112,18 +115,19 @@ public class EruptDataServiceDbImpl implements IEruptDataService {
 
     //优化异常提示类
     private void handlerException(Exception e, EruptModel eruptModel) {
-        e.printStackTrace();
-        if (e instanceof DataIntegrityViolationException) {
-            if (e.getMessage().contains("ConstraintViolationException")) {
-                throw new EruptWebApiRuntimeException(gcRepeatHint(eruptModel));
-            } else if (e.getMessage().contains("DataException")) {
-                throw new EruptWebApiRuntimeException(I18nTranslate.$translate("erupt.data.limit_length"));
-            } else {
-                throw new EruptWebApiRuntimeException(e.getMessage());
+        Throwable throwable = e;
+        while (null != throwable) {
+            throwable = throwable.getCause();
+            if (throwable instanceof SQLException) {
+                if (throwable.getMessage().contains("Data too long")) {
+                    throw new EruptWebApiRuntimeException(I18nTranslate.$translate("erupt.data.limit_length"));
+                } else if (throwable.getMessage().contains("Duplicate entry")) {
+                    throw new EruptWebApiRuntimeException(gcRepeatHint(eruptModel));
+                }
+                throw new EruptWebApiRuntimeException(throwable.getMessage());
             }
-        } else {
-            throw new EruptWebApiRuntimeException(e.getMessage());
         }
+        throw new EruptWebApiRuntimeException(e.getMessage());
     }
 
     @Transactional
@@ -132,7 +136,6 @@ public class EruptDataServiceDbImpl implements IEruptDataService {
         try {
             eruptJpaDao.removeEntity(eruptModel.getClazz(), object);
         } catch (DataIntegrityViolationException | ConstraintViolationException e) {
-            e.printStackTrace();
             throw new EruptWebApiRuntimeException(I18nTranslate.$translate("erupt.data.delete_fail_may_be_associated_data"));
         } catch (Exception e) {
             throw new EruptWebApiRuntimeException(e.getMessage());

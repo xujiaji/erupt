@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import xyz.erupt.annotation.EruptField;
@@ -34,6 +35,7 @@ import xyz.erupt.core.view.EruptFieldModel;
 import xyz.erupt.core.view.EruptModel;
 
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -45,6 +47,7 @@ import java.util.stream.Stream;
  * @author YuePeng
  * date 11/1/18.
  */
+@Slf4j
 public class EruptUtil {
 
     //将object中erupt标识的字段抽取出来放到map中
@@ -76,7 +79,12 @@ public class EruptUtil {
                             label = referenceTableType.label();
                         }
                         Map<String, Object> referMap = new HashMap<>();
-                        referMap.put(id, ReflectUtil.findFieldChain(id, value));
+                        Object rid = ReflectUtil.findFieldChain(id, value);
+                        if (null == rid) {
+                            referMap.put(id, null);
+                        } else {
+                            referMap.put(id, rid.toString());
+                        }
                         referMap.put(label, ReflectUtil.findFieldChain(label, value));
                         for (View view : eruptField.views()) {
                             //修复表格列无法显示子类属性（例如xxx.yyy.zzz这样的列配置）的缺陷，要配合前端的bug修复。
@@ -96,7 +104,7 @@ public class EruptUtil {
                     case TAB_TREE:
                         EruptModel tabEruptModel = EruptCoreService.getErupt(fieldModel.getFieldReturnName());
                         Collection<?> collection = (Collection<?>) value;
-                        if (collection.size() > 0) {
+                        if (!collection.isEmpty()) {
                             Set<Object> idSet = new HashSet<>();
                             Field primaryField = ReflectUtil.findClassField(collection.iterator().next().getClass(),
                                     tabEruptModel.getErupt().primaryKeyCol());
@@ -117,7 +125,14 @@ public class EruptUtil {
                         map.put(field.getName(), list);
                         break;
                     default:
-                        map.put(field.getName(), value);
+                        if (fieldModel.getField().getType() == Long.class ||
+                                fieldModel.getField().getType() == Float.class ||
+                                fieldModel.getField().getType() == Double.class ||
+                                fieldModel.getField().getType() == BigDecimal.class) {
+                            map.put(field.getName(), value.toString());
+                        } else {
+                            map.put(field.getName(), value);
+                        }
                         break;
                 }
             }
@@ -345,10 +360,14 @@ public class EruptUtil {
                             f.set(target, s);
                         }
                     } else {
-                        f.set(target, f.get(data));
+                        if (eruptField.edit().type() == EditType.INPUT && eruptField.edit().inputType().autoTrim() && null != f.get(data)) {
+                            f.set(target, f.get(data).toString().trim());
+                        } else {
+                            f.set(target, f.get(data));
+                        }
                     }
                 } catch (IllegalAccessException e) {
-                    e.printStackTrace();
+                    log.error("erupt data copy error", e);
                 }
             }
         }
@@ -366,7 +385,7 @@ public class EruptUtil {
                     }
                 }
             } catch (IllegalAccessException e) {
-                e.printStackTrace();
+                log.error("erupt clear error", e);
             }
         });
     }

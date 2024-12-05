@@ -16,6 +16,7 @@ import xyz.erupt.core.service.EruptCoreService;
 import xyz.erupt.core.util.MD5Util;
 import xyz.erupt.core.util.ProjectUtil;
 import xyz.erupt.jpa.dao.EruptDao;
+import xyz.erupt.linq.lambda.LambdaSee;
 import xyz.erupt.upms.enums.EruptFunPermissions;
 import xyz.erupt.upms.model.EruptMenu;
 import xyz.erupt.upms.model.EruptUser;
@@ -44,27 +45,25 @@ public class UpmsDataLoadService implements CommandLineRunner {
     @Resource
     private EruptProp eruptProp;
 
-    public static final String DEFAULT_ACCOUNT = "erupt";
+    public static final String DEFAULT_ACCOUNT = EruptConst.ERUPT;
 
     @Transactional
     @Override
     public void run(String... args) {
-        Optional.of(Integer.valueOf(eruptDao.getEntityManager().createNativeQuery("select count(*) from e_upms_user").getSingleResult().toString())).ifPresent(it -> {
-            if (it <= 0) {
-                try {
-                    FileUtils.deleteDirectory(new File(System.getProperty("user.dir") + "/" + EruptConst.ERUPT_DIR));
-                } catch (IOException e) {
-                    log.error("Table 'e_upms_user' no user data. Re-initialization failed ：" + e.getMessage());
-                }
+        if (eruptDao.lambdaQuery(EruptUser.class).count() <= 0) {
+            try {
+                FileUtils.deleteDirectory(new File(System.getProperty("user.dir") + "/" + EruptConst.ERUPT_DIR));
+            } catch (IOException e) {
+                log.error("Table 'e_upms_user' no user data. Re-initialization failed ：", e);
             }
-        });
+        }
         if (InitMethodEnum.NONE != eruptProp.getInitMethodEnum()) {
             EruptModuleInvoke.invoke(module -> Optional.ofNullable(module.initMenus()).ifPresent(metaMenus ->
                     new ProjectUtil().projectStartLoaded(module.info().getName(), first -> {
                         Runnable runnable = (() -> {
                             module.initFun();
                             for (MetaMenu metaMenu : metaMenus) {
-                                EruptMenu eruptMenu = eruptDao.persistIfNotExist(EruptMenu.class, EruptMenu.fromMetaMenu(metaMenu), EruptMenu.CODE, metaMenu.getCode());
+                                EruptMenu eruptMenu = eruptDao.persistIfNotExist(EruptMenu.class, EruptMenu.fromMetaMenu(metaMenu), LambdaSee.field(EruptMenu::getCode), metaMenu.getCode());
                                 metaMenu.setId(eruptMenu.getId());
                                 if (null != eruptMenu.getType() && null != eruptMenu.getValue()) {
                                     if (MenuTypeEnum.TABLE.getCode().equals(eruptMenu.getType()) || MenuTypeEnum.TREE.getCode().equals(eruptMenu.getType())) {
@@ -78,7 +77,7 @@ public class UpmsDataLoadService implements CommandLineRunner {
                                                             value.getName(), MenuTypeEnum.BUTTON.getCode(),
                                                             UPMSUtil.getEruptFunPermissionsCode(eruptMenu.getValue(), value),
                                                             eruptMenu, i.addAndGet(10)
-                                                    ), EruptMenu.CODE, UPMSUtil.getEruptFunPermissionsCode(eruptMenu.getValue(), value));
+                                                    ), LambdaSee.field(EruptMenu::getCode), UPMSUtil.getEruptFunPermissionsCode(eruptMenu.getValue(), value));
                                                 }
                                             }
                                         });
@@ -99,8 +98,7 @@ public class UpmsDataLoadService implements CommandLineRunner {
         }
         new ProjectUtil().projectStartLoaded("erupt-upms-user", first -> {
             if (first) {
-                //用户
-                if (eruptDao.queryEntityList(EruptUser.class, "isAdmin = true").size() <= 0) {
+                if (eruptDao.lambdaQuery(EruptUser.class).eq(EruptUser::getIsAdmin, true).list().isEmpty()) {
                     EruptUser eruptUser = new EruptUser();
                     eruptUser.setIsAdmin(true);
                     eruptUser.setIsMd5(true);
@@ -109,7 +107,7 @@ public class UpmsDataLoadService implements CommandLineRunner {
                     eruptUser.setAccount(DEFAULT_ACCOUNT);
                     eruptUser.setPassword(MD5Util.digest(DEFAULT_ACCOUNT));
                     eruptUser.setName(DEFAULT_ACCOUNT);
-                    eruptDao.persistIfNotExist(EruptUser.class, eruptUser, "account", eruptUser.getAccount());
+                    eruptDao.persistIfNotExist(EruptUser.class, eruptUser, LambdaSee.field(EruptUser::getAccount), eruptUser.getAccount());
                 }
             }
         });

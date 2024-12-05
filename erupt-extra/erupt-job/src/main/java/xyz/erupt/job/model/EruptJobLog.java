@@ -6,16 +6,22 @@ import org.hibernate.annotations.Type;
 import xyz.erupt.annotation.Erupt;
 import xyz.erupt.annotation.EruptField;
 import xyz.erupt.annotation.EruptI18n;
+import xyz.erupt.annotation.constant.AnnotationConst;
 import xyz.erupt.annotation.sub_erupt.Power;
 import xyz.erupt.annotation.sub_field.Edit;
 import xyz.erupt.annotation.sub_field.EditType;
 import xyz.erupt.annotation.sub_field.View;
 import xyz.erupt.annotation.sub_field.ViewType;
 import xyz.erupt.annotation.sub_field.sub_edit.BoolType;
+import xyz.erupt.annotation.sub_field.sub_edit.ChoiceType;
 import xyz.erupt.annotation.sub_field.sub_edit.Search;
 import xyz.erupt.jpa.model.BaseModel;
+import xyz.erupt.toolkit.handler.SqlChoiceFetchHandler;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Lob;
+import javax.persistence.Table;
 import java.util.Date;
 
 /**
@@ -34,14 +40,14 @@ import java.util.Date;
 @Setter
 public class EruptJobLog extends BaseModel {
 
-    @ManyToOne
-    @JoinColumn(name = "job_id")
     @EruptField(
-            views = @View(title = "任务名称", column = "name"),
-            edit = @Edit(title = "任务名称", show = false, search = @Search, type = EditType.REFERENCE_TREE)
+            views = @View(title = "任务名称", type = ViewType.TEXT),
+            edit = @Edit(title = "任务名称", search = @Search, type = EditType.CHOICE,
+                    choiceType = @ChoiceType(fetchHandler = SqlChoiceFetchHandler.class, fetchHandlerParams = "select id, name from e_job"))
     )
-    private EruptJob eruptJob;
+    private Long jobId;
 
+    @Column(length = AnnotationConst.REMARK_LENGTH)
     @EruptField(
             views = @View(title = "任务参数")
     )
@@ -54,12 +60,13 @@ public class EruptJobLog extends BaseModel {
     private Boolean status;
 
     @EruptField(
-            views = @View(title = "开始时间", type = ViewType.DATE_TIME)
+            views = @View(title = "开始时间", type = ViewType.DATE_TIME),
+            edit = @Edit(title = "任务执行时间", search = @Search(vague = true))
     )
     private Date startTime;
 
     @EruptField(
-            views = @View(title = "结束时间",type = ViewType.DATE_TIME)
+            views = @View(title = "结束时间", type = ViewType.DATE_TIME)
     )
     private Date endTime;
 
@@ -73,7 +80,7 @@ public class EruptJobLog extends BaseModel {
     @Lob
     @Type(type = "org.hibernate.type.TextType")
     @EruptField(
-            views = @View(title = "错误信息", type = ViewType.HTML),
+            views = @View(title = "错误信息", type = ViewType.HTML, sortable = true),
             edit = @Edit(title = "错误信息")
     )
     private String errorInfo;

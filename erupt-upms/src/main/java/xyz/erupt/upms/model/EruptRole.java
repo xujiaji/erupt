@@ -2,7 +2,6 @@ package xyz.erupt.upms.model;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.stereotype.Component;
 import xyz.erupt.annotation.Erupt;
 import xyz.erupt.annotation.EruptField;
 import xyz.erupt.annotation.EruptI18n;
@@ -25,17 +24,14 @@ import java.util.Set;
  * date 2018-11-22.
  */
 @Entity
-@Table(name = "e_upms_role", uniqueConstraints = {
-        @UniqueConstraint(columnNames = "code")
-})
+@Table(name = "e_upms_role")
 @Erupt(name = "角色管理", dataProxy = EruptRoleDataProxy.class, orderBy = "EruptRole.sort asc")
 @EruptI18n
 @Getter
 @Setter
-@Component
 public class EruptRole extends HyperModelUpdateVo {
 
-    @Column(length = AnnotationConst.CODE_LENGTH)
+    @Column(length = AnnotationConst.CODE_LENGTH, unique = true)
     @EruptField(
             views = @View(title = "编码"),
             edit = @Edit(title = "编码", notNull = true, search = @Search(vague = true))

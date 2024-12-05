@@ -7,7 +7,6 @@ import xyz.erupt.core.constant.MenuStatus;
 import xyz.erupt.core.constant.MenuTypeEnum;
 import xyz.erupt.core.exception.EruptWebApiRuntimeException;
 import xyz.erupt.core.service.EruptCoreService;
-import xyz.erupt.core.util.EruptSpringUtil;
 import xyz.erupt.core.util.Erupts;
 import xyz.erupt.core.view.EruptModel;
 import xyz.erupt.jpa.dao.EruptDao;
@@ -16,7 +15,6 @@ import xyz.erupt.upms.model.EruptMenu;
 import xyz.erupt.upms.model.EruptRole;
 import xyz.erupt.upms.model.EruptUser;
 import xyz.erupt.upms.util.UPMSUtil;
-import xyz.erupt.upms.vo.EruptMenuVo;
 
 import javax.annotation.Resource;
 import java.util.*;
@@ -35,18 +33,15 @@ public class EruptMenuService implements DataProxy<EruptMenu> {
     @Resource
     private EruptContextService eruptContextService;
 
-    public List<EruptMenuVo> geneMenuListVo(List<EruptMenu> menus) {
-        List<EruptMenuVo> list = new ArrayList<>();
-        menus.stream().filter(menu -> menu.getStatus() == MenuStatus.OPEN.getValue()).forEach(menu -> {
-            Long pid = null == menu.getParentMenu() ? null : menu.getParentMenu().getId();
-            list.add(new EruptMenuVo(menu.getId(), menu.getCode(), menu.getName(), menu.getType(), menu.getValue(), menu.getIcon(), pid));
-        });
-        return list;
-    }
+    @Resource
+    private EruptUserService eruptUserService;
+
+    @Resource
+    private EruptTokenService eruptTokenService;
 
     public List<EruptMenu> getUserAllMenu(EruptUser eruptUser) {
         if (null != eruptUser.getIsAdmin() && eruptUser.getIsAdmin()) {
-            return eruptDao.queryEntityList(EruptMenu.class, "1 = 1 order by sort");
+            return eruptDao.lambdaQuery(EruptMenu.class).orderBy(EruptMenu::getSort).list();
         } else {
             Set<EruptMenu> menuSet = new HashSet<>();
             eruptUser.getRoles().stream().filter(EruptRole::getStatus).map(EruptRole::getMenus).forEach(menuSet::addAll);
@@ -56,8 +51,8 @@ public class EruptMenuService implements DataProxy<EruptMenu> {
 
     @Override
     public void addBehavior(EruptMenu eruptMenu) {
-        Integer obj = (Integer) eruptDao.getEntityManager().createQuery("select max(sort) from " + EruptMenu.class.getSimpleName()).getSingleResult();
-        Optional.ofNullable(obj).ifPresent(it -> eruptMenu.setSort(it + 10));
+        Integer sort = (Integer) eruptDao.lambdaQuery(EruptMenu.class).max(EruptMenu::getSort);
+        Optional.ofNullable(sort).ifPresent(it -> eruptMenu.setSort(it + 10));
         eruptMenu.setStatus(MenuStatus.OPEN.getValue());
     }
 
@@ -76,70 +71,57 @@ public class EruptMenuService implements DataProxy<EruptMenu> {
         this.beforeAdd(eruptMenu);
     }
 
-    /**
-     * The reason for that:
-     * <p>
-     * The dependencies of some of the beans in the application context form a cycle:
-     * mvcInterceptor
-     * ↓
-     * eruptSecurityInterceptor
-     * ┌─────┐
-     * |  eruptUserService
-     * ↑     ↓
-     * |  eruptMenuService
-     * └─────┘
-     */
-    private void flushCache() {
-        EruptUserService eruptUserService = EruptSpringUtil.getBean(EruptUserService.class);
-        eruptUserService.cacheUserInfo(eruptUserService.getCurrentEruptUser(), eruptContextService.getCurrentToken());
-    }
 
+    public void flushMenuCache() {
+        eruptTokenService.loginToken(eruptUserService.getCurrentEruptUser(), eruptContextService.getCurrentToken());
+    }
 
     @Override
     public void afterAdd(EruptMenu eruptMenu) {
         if (null != eruptMenu.getValue()) {
             if (MenuTypeEnum.TABLE.getCode().equals(eruptMenu.getType()) || MenuTypeEnum.TREE.getCode().equals(eruptMenu.getType())) {
                 int i = 0;
-                Integer counter = eruptDao.getJdbcTemplate().queryForObject(
-                        String.format("select count(*) from e_upms_menu where parent_menu_id = %d", eruptMenu.getId()), Integer.class
-                );
-                if (null != counter) {
-                    if (counter > 0) {
-                        // 查询有权限菜单
-                        Integer realCounter = eruptDao.getJdbcTemplate().queryForObject(
-                                String.format("select count(*) from e_upms_menu where parent_menu_id = %d and value like '%s@%%'", eruptMenu.getId(), eruptMenu.getValue()), Integer.class
+                EruptModel eruptModel = EruptCoreService.getErupt(eruptMenu.getValue());
+                for (EruptFunPermissions value : EruptFunPermissions.values()) {
+                    if (eruptModel == null || value.verifyPower(eruptModel.getErupt().power())) {
+                        eruptDao.persist(new EruptMenu(
+                                Erupts.generateCode(), value.getName(), MenuTypeEnum.BUTTON.getCode(),
+                                UPMSUtil.getEruptFunPermissionsCode(eruptMenu.getValue(), value), eruptMenu, i += 10)
                         );
-                        // 如果没有查询出权限菜单，那么本次修改Value
-                        if (null != realCounter && realCounter == 0) {
-                            eruptDao.getJdbcTemplate().update(String.format("delete from e_upms_menu where parent_menu_id = %d and value like '%%@%%'", eruptMenu.getId()));
-                            counter = 0;
-                        }
-                    }
-                    if (counter <= 0) {
-                        EruptModel eruptModel = EruptCoreService.getErupt(eruptMenu.getValue());
-                        for (EruptFunPermissions value : EruptFunPermissions.values()) {
-                            if (eruptModel == null || value.verifyPower(eruptModel.getErupt().power())) {
-                                eruptDao.persist(new EruptMenu(
-                                        Erupts.generateCode(), value.getName(), MenuTypeEnum.BUTTON.getCode(),
-                                        UPMSUtil.getEruptFunPermissionsCode(eruptMenu.getValue(), value), eruptMenu, i += 10)
-                                );
-                            }
-                        }
                     }
                 }
             }
         }
-        this.flushCache();
+        this.flushMenuCache();
     }
 
     @Override
     public void afterUpdate(EruptMenu eruptMenu) {
-        this.afterAdd(eruptMenu);
+        List<EruptMenu> subMenus = eruptDao.lambdaQuery(EruptMenu.class).addCondition("parentMenu.id = " + eruptMenu.getId()).list();
+        for (EruptMenu subMenu : subMenus) {
+            if (null != subMenu.getValue() && subMenu.getValue().contains("@")) {
+                String[] arr = subMenu.getValue().split("@");
+                try {
+                    EruptFunPermissions.valueOf(arr[1]);
+                    if (!arr[0].equals(eruptMenu.getValue())) {
+                        subMenu.setValue(eruptMenu.getValue() + "@" + arr[1]);
+                        eruptDao.merge(subMenu);
+                    }
+                } catch (Exception ignore) {
+
+                }
+            }
+        }
+    }
+
+    @Override
+    public void beforeDelete(EruptMenu eruptMenu) {
+        eruptDao.getJdbcTemplate().update("delete from e_upms_role_menu where menu_id = " + eruptMenu.getId());
     }
 
     @Override
     public void afterDelete(EruptMenu eruptMenu) {
-        this.flushCache();
+        this.flushMenuCache();
     }
 
 }

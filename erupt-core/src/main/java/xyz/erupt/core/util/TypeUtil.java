@@ -3,6 +3,7 @@ package xyz.erupt.core.util;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.math.NumberUtils;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.function.Consumer;
 
@@ -24,11 +25,6 @@ public class TypeUtil {
     @SneakyThrows
     public static Object typeStrConvertObject(Object obj, Class<?> targetType) {
         String str = obj.toString();
-        if (NumberUtils.isCreatable(str)) {
-            if (str.endsWith(".0")) {  //处理gson序列化数值多了一个0
-                str = str.substring(0, str.length() - 2);
-            }
-        }
         if (int.class == targetType || Integer.class == targetType) {
             return Integer.valueOf(str);
         } else if (short.class == targetType || Short.class == targetType) {
@@ -39,6 +35,8 @@ public class TypeUtil {
             return Float.valueOf(str);
         } else if (double.class == targetType || Double.class == targetType) {
             return Double.valueOf(str);
+        } else if (BigDecimal.class == targetType) {
+            return new BigDecimal(str);
         } else if (boolean.class == targetType || Boolean.class == targetType) {
             return Boolean.valueOf(str);
         } else if (targetType.isEnum()) {

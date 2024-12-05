@@ -1,6 +1,5 @@
 package xyz.erupt.annotation.sub_erupt;
 
-import xyz.erupt.annotation.config.AutoFill;
 import xyz.erupt.annotation.config.Comment;
 import xyz.erupt.annotation.expr.ExprBool;
 import xyz.erupt.annotation.fun.OperationHandler;
@@ -15,8 +14,6 @@ import java.beans.Transient;
  */
 public @interface RowOperation {
 
-    @Deprecated
-    @AutoFill("T(Integer).toString(#item.title().hashCode())")
     String code() default "";
 
     String title();
@@ -24,7 +21,12 @@ public @interface RowOperation {
     @Transient
     ExprBool show() default @ExprBool;
 
+    @Comment("功能提示")
     String tip() default "";
+
+    @Comment("调用提示,空则不提示")
+    String callHint() default "erupt.operation.call_hint";
+
 
     @Comment("图标请参考Font Awesome")
     String icon() default "fa fa-dot-circle-o";
@@ -60,6 +62,8 @@ public @interface RowOperation {
         SINGLE,
         @Comment("依赖多行数据")
         MULTI,
+        @Comment("仅依赖多行数据，屏蔽单行操作按钮")
+        MULTI_ONLY,
         @Comment("不依赖行数据")
         BUTTON
     }

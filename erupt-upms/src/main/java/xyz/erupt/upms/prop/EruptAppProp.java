@@ -5,6 +5,9 @@ import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * @author YuePeng
  * date 2021/1/22 10:11
@@ -35,14 +38,34 @@ public class EruptAppProp {
 
     //多语言配置
     private String[] locales = {
-            DEFAULT_LANG, // 简体中文
+            "zh-CN",      // 简体中文
             "zh-TW",      // 繁体中文
             "en-US",      // English
             "fr-FR",      // En français
             "ja-JP",      // 日本語
             "ko-KR",      // 한국어
-            "ru_RU",      // русск
-            "es_ES"       // español
+            "ru-RU",      // русск
+            "es-ES"       // español
     };
+
+    //自定义配置
+    private Map<String, Object> properties = new HashMap<>();
+
+    //重置密码功能开关
+    private Boolean resetPwd = true;
+
+    public void setLocales(String[] locales) {
+        if (null == locales || locales.length == 0) {
+            this.locales = new String[]{"zh-CN"};
+        } else {
+            this.locales = locales;
+        }
+    }
+
+    //注册自定义属性
+    public void registerProp(String key, Object value) {
+        this.properties.put(key, value);
+    }
+
 
 }

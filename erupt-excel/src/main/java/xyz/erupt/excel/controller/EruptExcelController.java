@@ -24,7 +24,7 @@ import xyz.erupt.core.util.SecurityUtil;
 import xyz.erupt.core.view.EruptApiModel;
 import xyz.erupt.core.view.EruptModel;
 import xyz.erupt.core.view.Page;
-import xyz.erupt.core.view.TableQueryVo;
+import xyz.erupt.core.view.TableQuery;
 import xyz.erupt.excel.service.EruptExcelService;
 import xyz.erupt.excel.util.ExcelUtil;
 
@@ -77,11 +77,11 @@ public class EruptExcelController {
         if (eruptProp.isCsrfInspect() && SecurityUtil.csrfInspect(request, response)) return;
         EruptModel eruptModel = EruptCoreService.getErupt(eruptName);
         Erupts.powerLegal(eruptModel, PowerObject::isExport);
-        TableQueryVo tableQueryVo = new TableQueryVo();
-        tableQueryVo.setPageIndex(1);
-        tableQueryVo.setDataExport(true);
-        Optional.ofNullable(conditions).ifPresent(tableQueryVo::setCondition);
-        Page page = eruptService.getEruptData(eruptModel, tableQueryVo, null);
+        TableQuery tableQuery = new TableQuery();
+        tableQuery.setPageIndex(1);
+        tableQuery.setPageSize(Page.PAGE_MAX_DATA);
+        Optional.ofNullable(conditions).ifPresent(tableQuery::setCondition);
+        Page page = eruptService.getEruptData(eruptModel, tableQuery, null);
         try (Workbook wb = dataFileService.exportExcel(eruptModel, page)) {
             DataProxyInvoke.invoke(eruptModel, (dataProxy -> dataProxy.excelExport(wb)));
             wb.write(ExcelUtil.downLoadFile(request, response, eruptModel.getErupt().name() + EruptExcelService.XLSX_FORMAT));
@@ -113,13 +113,11 @@ public class EruptExcelController {
             list = dataFileService.excelToEruptObject(eruptModel, wb);
             wb.close();
         } catch (Exception e) {
-            e.printStackTrace();
             throw new EruptWebApiRuntimeException("Excel解析异常，出错行数：" + i + "，原因：" + e.getMessage(), e);
         }
         try {
             eruptModifyController.batchAddEruptData(eruptModel, list);
         } catch (Exception e) {
-            e.printStackTrace();
             throw new EruptWebApiRuntimeException("数据导入异常，原因：" + e.getMessage());
         }
         return EruptApiModel.successApi();

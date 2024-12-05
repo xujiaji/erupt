@@ -6,12 +6,16 @@ import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.stereotype.Component;
 import xyz.erupt.cloud.server.config.EruptCloudServerProp;
+import xyz.erupt.cloud.server.model.CloudNode;
+import xyz.erupt.jpa.dao.EruptDao;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * @author YuePeng
@@ -21,6 +25,9 @@ import java.util.concurrent.TimeUnit;
 public class NodeManager {
 
     public static final String NODE_SPACE = "node:";
+
+    @Resource
+    private EruptDao eruptDao;
 
     private RedisTemplate<String, MetaNode> redisTemplate;
 
@@ -43,7 +50,7 @@ public class NodeManager {
     }
 
     public void putNode(MetaNode metaNode) {
-        if (metaNode.getLocations().size() <= 0) {
+        if (metaNode.getLocations().isEmpty()) {
             this.removeNode(metaNode.getNodeName());
         } else {
             redisTemplate.opsForValue().set(geneKey(metaNode.getNodeName()), metaNode,
@@ -64,11 +71,16 @@ public class NodeManager {
 
 
     public List<MetaNode> findAllNodes() {
-        List<MetaNode> metaNodes = new ArrayList<>();
-        Optional.ofNullable(redisTemplate.keys(eruptCloudServerProp.getCloudNameSpace() + NODE_SPACE + "*")).flatMap(keys ->
-                Optional.ofNullable(redisTemplate.opsForValue().multiGet(keys))).ifPresent(metaNodes::addAll
-        );
-        return metaNodes;
+        List<String> keys = eruptDao.lambdaQuery(CloudNode.class).list().stream().map(it ->
+                eruptCloudServerProp.getCloudNameSpace() + NODE_SPACE + it.getNodeName()
+        ).collect(Collectors.toList());
+        if (!keys.isEmpty()) {
+            List<MetaNode> metaNodes = Optional.ofNullable(redisTemplate.opsForValue().multiGet(keys)).orElse(new ArrayList<>());
+            metaNodes.removeIf(Objects::isNull);
+            return metaNodes;
+        } else {
+            return new ArrayList<>();
+        }
     }
 
 }
