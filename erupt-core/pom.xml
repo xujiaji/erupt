@@ -53,7 +53,7 @@
             <version>2.4.0</version>
         </dependency>
         <dependency>
-            <groupId>${erupt.groupId}</groupId>
+            <groupId>xyz.erupt</groupId>
             <artifactId>linq.j</artifactId>
             <version>0.0.6</version>
         </dependency>
