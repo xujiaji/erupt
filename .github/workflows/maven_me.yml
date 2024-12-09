@@ -20,6 +20,8 @@ jobs:
     - name: Install Java and Maven
       uses: actions/setup-java@v4
       with:
+        distribution: 'zulu' # As good as any other, see: https://github.com/actions/setup-java#supported-distributions
+        java-package: 'jdk'
         java-version: 11
         check-latest: true
         server-id: 'ossrh'
