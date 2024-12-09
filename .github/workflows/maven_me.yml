@@ -31,7 +31,7 @@ jobs:
         gpg-passphrase: SIGN_KEY_PASS # Env var that holds the key's passphrase
         cache: 'maven'
     - name: Build & Deploy
-      run: mvn --batch-mode deploy
+      run: mvn -P release --batch-mode deploy -DskipTests
       env:
         SIGN_KEY_PASS: ${{ secrets.GPG_PASSWORD }}
         OSSRH_USERNAME: ${{ secrets.OSSRH_USER }}
