@@ -214,6 +214,7 @@
                             <charset>UTF-8</charset>
                             <javadocExecutable>${java.home}/bin/javadoc</javadocExecutable>
                             <additionalparam>-Xdoclint:none</additionalparam>
+                            <failOnError>false</failOnError>
                         </configuration>
 
                     </execution>
