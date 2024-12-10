@@ -174,9 +174,9 @@
                 <executions>
                     <execution>
                         <id>attach-sources</id>
-                        <phase>verify</phase>
+                        <phase>package</phase>
                         <goals>
-                            <goal>jar-no-fork</goal>
+                            <goal>jar</goal>
                         </goals>
                     </execution>
                 </executions>
@@ -194,6 +194,7 @@
                 <executions>
                     <execution>
                         <id>attach-javadoc</id>
+                        <phase>package</phase>
                         <goals>
                             <goal>jar</goal>
                         </goals>
@@ -213,7 +214,8 @@
                 <executions>
                     <execution>
                         <id>flatten</id>
-                        <phase>process-resources</phase>
+<!--                        <phase>process-resources</phase>-->
+                        <phase>package</phase>
                         <goals>
                             <goal>flatten</goal>
                         </goals>
