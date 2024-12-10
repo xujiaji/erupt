@@ -3,22 +3,34 @@ package xyz.erupt.upms.model;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.stereotype.Component;
 import xyz.erupt.annotation.Erupt;
 import xyz.erupt.annotation.EruptField;
 import xyz.erupt.annotation.EruptI18n;
 import xyz.erupt.annotation.constant.AnnotationConst;
+import xyz.erupt.annotation.fun.DataProxy;
+import xyz.erupt.annotation.query.Condition;
 import xyz.erupt.annotation.sub_erupt.Tree;
 import xyz.erupt.annotation.sub_field.Edit;
 import xyz.erupt.annotation.sub_field.EditType;
 import xyz.erupt.annotation.sub_field.View;
 import xyz.erupt.annotation.sub_field.sub_edit.ReferenceTreeType;
 import xyz.erupt.annotation.sub_field.sub_edit.Search;
+import xyz.erupt.core.exception.EruptWebApiRuntimeException;
+import xyz.erupt.core.i18n.I18nTranslate;
 import xyz.erupt.jpa.model.BaseModel;
+import xyz.erupt.upms.service.EruptUserService;
 
+import javax.annotation.Resource;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.function.BinaryOperator;
+import java.util.stream.Collectors;
 
 /**
  * @author YuePeng
@@ -29,6 +41,7 @@ import javax.persistence.Table;
 @Erupt(
         name = "组织管理",
         tree = @Tree(pid = "parentOrg.id", expandLevel = 5),
+        dataProxy = EruptOrg.Comp.class,
         orderBy = "EruptOrg.sort asc"
 )
 @EruptI18n
@@ -67,5 +80,24 @@ public class EruptOrg extends BaseModel {
     )
     private Integer sort;
 
+    @Component
+    static class Comp implements DataProxy<EruptOrg> {
+        @Resource
+        private EruptUserService eruptUserService;
+
+        @Override
+        public String beforeFetch(List<Condition> conditions) {
+            EruptUser eruptUser = eruptUserService.getCurrentEruptUser();
+            if (eruptUser.getIsAdmin()) return null;
+            if (null == eruptUser.getEruptOrg()) {
+                throw new EruptWebApiRuntimeException(eruptUser.getName() + " " + I18nTranslate.$translate("upms.no_bind_org"));
+            } else {
+                final Set<Long> orgIds = eruptUser.getOtherOrgs().stream().map(BaseModel::getId).collect(Collectors.toSet());
+                orgIds.add(eruptUser.getEruptOrg().getId());
+                String ids = orgIds.stream().map(String::valueOf).reduce((s, s2) -> s + "," + s2).get();
+                return "EruptOrg.id IN (" + ids + ")";
+            }
+        }
+    }
 
 }
