@@ -174,7 +174,6 @@
                 <executions>
                     <execution>
                         <id>attach-sources</id>
-                        <phase>package</phase>
                         <goals>
                             <goal>jar</goal>
                         </goals>
@@ -194,7 +193,6 @@
                 <executions>
                     <execution>
                         <id>attach-javadoc</id>
-                        <phase>package</phase>
                         <goals>
                             <goal>jar</goal>
                         </goals>
@@ -215,7 +213,7 @@
                     <execution>
                         <id>flatten</id>
 <!--                        <phase>process-resources</phase>-->
-                        <phase>package</phase>
+
                         <goals>
                             <goal>flatten</goal>
                         </goals>
@@ -247,7 +245,7 @@
     </scm>
     <developers>
         <developer>
-            <name>mavenupload</name>
+            <name>xujiaji</name>
             <email>jiajixu@qq.com</email>
             <roles>
                 <role>owner</role>
