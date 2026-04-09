@@ -2,7 +2,7 @@
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>xyz.erupt</groupId>
+    <groupId>com.github.xujiaji.erupt</groupId>
     <artifactId>erupt</artifactId>
     <version>1.13.3</version>
 
@@ -13,9 +13,10 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <erupt.groupId>xyz.erupt</erupt.groupId>
+        <erupt.groupId>com.github.xujiaji.erupt</erupt.groupId>
         <java.version>17</java.version>
         <spring.boot.version>3.5.9</spring.boot.version>
+        <maven.deploy.skip>true</maven.deploy.skip>
     </properties>
 
     <!--
@@ -156,6 +157,14 @@
                 <artifactId>maven-scm-plugin</artifactId>
                 <version>1.8.1</version>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <version>3.1.2</version>
+                <configuration>
+                    <skip>${maven.deploy.skip}</skip>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
@@ -174,8 +183,8 @@
     </scm>
     <developers>
         <developer>
-            <name>YuePeng</name>
-            <email>erupts@126.com</email>
+            <name>xujiaji</name>
+            <email>jiajixu@qq.com</email>
             <roles>
                 <role>owner</role>
             </roles>

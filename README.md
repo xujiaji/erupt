@@ -137,13 +137,13 @@ No need to compile source code. Simply add the following dependencies to your Sp
 ```xml
 <!--Core dependency-->
 <dependency>
-    <groupId>xyz.erupt</groupId>
+    <groupId>com.github.xujiaji.erupt</groupId>
     <artifactId>erupt-admin</artifactId>
     <version>${LATEST-VERSION}</version>
 </dependency>
 <!--Backend WEB interface-->
 <dependency>
-    <groupId>xyz.erupt</groupId>
+    <groupId>com.github.xujiaji.erupt</groupId>
     <artifactId>erupt-web</artifactId>
     <version>${LATEST-VERSION}</version>
 </dependency>

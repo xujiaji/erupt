@@ -9,7 +9,7 @@
     <description>core realize</description>
 
     <parent>
-        <groupId>xyz.erupt</groupId>
+        <groupId>com.github.xujiaji.erupt</groupId>
         <artifactId>erupt</artifactId>
         <version>1.13.3</version>
         <relativePath>../pom.xml</relativePath>
@@ -54,7 +54,7 @@
             <version>2.4.0</version>
         </dependency>
         <dependency>
-            <groupId>${erupt.groupId}</groupId>
+            <groupId>xyz.erupt</groupId>
             <artifactId>linq.j</artifactId>
             <version>0.0.9</version>
         </dependency>

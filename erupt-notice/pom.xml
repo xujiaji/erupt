@@ -9,7 +9,7 @@
     <description>erupt notice</description>
 
     <parent>
-        <groupId>xyz.erupt</groupId>
+        <groupId>com.github.xujiaji.erupt</groupId>
         <artifactId>erupt</artifactId>
         <version>1.13.3</version>
         <relativePath>../pom.xml</relativePath>
@@ -17,7 +17,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>xyz.erupt</groupId>
+            <groupId>com.github.xujiaji.erupt</groupId>
             <artifactId>erupt-upms</artifactId>
             <version>${project.parent.version}</version>
             <scope>provided</scope>

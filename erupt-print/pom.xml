@@ -8,7 +8,7 @@
     <name>erupt-print</name>
     <dependencies>
         <dependency>
-            <groupId>xyz.erupt</groupId>
+            <groupId>com.github.xujiaji.erupt</groupId>
             <artifactId>erupt-upms</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
@@ -20,7 +20,7 @@
     </dependencies>
 
     <parent>
-        <groupId>xyz.erupt</groupId>
+        <groupId>com.github.xujiaji.erupt</groupId>
         <artifactId>erupt</artifactId>
         <version>1.13.3</version>
         <relativePath>../pom.xml</relativePath>

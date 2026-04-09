@@ -25,11 +25,7 @@ import xyz.erupt.core.i18n.I18nTranslate;
 import xyz.erupt.jpa.model.BaseModel;
 import xyz.erupt.upms.service.EruptUserService;
 
-import javax.annotation.Resource;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+import jakarta.annotation.Resource;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;

@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>xyz.erupt</groupId>
+        <groupId>com.github.xujiaji.erupt</groupId>
         <artifactId>erupt</artifactId>
         <version>1.13.3</version>
         <relativePath>../../pom.xml</relativePath>
@@ -19,24 +19,24 @@
 
     <dependencies>
         <dependency>
-            <groupId>xyz.erupt</groupId>
+            <groupId>com.github.xujiaji.erupt</groupId>
             <artifactId>erupt-web</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
-            <groupId>xyz.erupt</groupId>
+            <groupId>com.github.xujiaji.erupt</groupId>
             <artifactId>erupt-monitor</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
-            <groupId>xyz.erupt</groupId>
+            <groupId>com.github.xujiaji.erupt</groupId>
             <artifactId>erupt-admin</artifactId>
             <scope>provided</scope>
             <version>${project.parent.version}</version>
         </dependency>
 
         <dependency>
-            <groupId>xyz.erupt</groupId>
+            <groupId>com.github.xujiaji.erupt</groupId>
             <artifactId>erupt-cloud-server</artifactId>
             <version>${project.parent.version}</version>
         </dependency>

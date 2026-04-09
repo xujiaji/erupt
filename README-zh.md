@@ -138,13 +138,13 @@ public void select() {
 ```xml
 <!--核心依赖-->
 <dependency>
-    <groupId>xyz.erupt</groupId>
+    <groupId>com.github.xujiaji.erupt</groupId>
     <artifactId>erupt-admin</artifactId>
     <version>${LATEST-VERSION}</version>
 </dependency>
 <!--后台WEB界面-->
 <dependency>
-    <groupId>xyz.erupt</groupId>
+    <groupId>com.github.xujiaji.erupt</groupId>
     <artifactId>erupt-web</artifactId>
     <version>${LATEST-VERSION}</version>
 </dependency>
