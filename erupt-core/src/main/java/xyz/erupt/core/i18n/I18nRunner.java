@@ -3,8 +3,6 @@ package xyz.erupt.core.i18n;
 import lombok.Cleanup;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.ApplicationArguments;
-import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedCaseInsensitiveMap;
 
@@ -29,12 +27,16 @@ import java.util.jar.JarFile;
  */
 @Service
 @Slf4j
-public class I18nRunner extends LinkedCaseInsensitiveMap<Map<String, String>> implements ApplicationRunner {
+public class I18nRunner extends LinkedCaseInsensitiveMap<Map<String, String>>  {
 
-    //语言文件对应文字映射
+    // Mapping of text in language files
     private static final I18nRunner langMappings = new I18nRunner();
 
     private static final String I18N_EXT = ".csv";
+
+    public static List<String> langs(){
+        return new ArrayList<>(langMappings.keySet());
+    }
 
     public static String getI18nValue(String lang, String key) {
         if (null == langMappings.get(lang)) {
@@ -43,15 +45,14 @@ public class I18nRunner extends LinkedCaseInsensitiveMap<Map<String, String>> im
         return Optional.ofNullable(langMappings.get(lang).get(key)).orElse(key);
     }
 
-    @Override
     @SneakyThrows
-    public void run(ApplicationArguments args) {
+    public void init() {
         Enumeration<URL> urls = I18nRunner.class.getClassLoader().getResources("i18n/");
         while (urls.hasMoreElements()) {
             URL url = urls.nextElement();
             switch (url.getProtocol()) {
                 case "file":
-                    scanFile(new File(URLDecoder.decode(url.getFile(), Charset.defaultCharset().name())));
+                    scanFile(new File(URLDecoder.decode(url.getFile(), Charset.defaultCharset())));
                     break;
                 case "jar":
                     JarURLConnection urlConnection = (JarURLConnection) url.openConnection();
@@ -97,7 +98,7 @@ public class I18nRunner extends LinkedCaseInsensitiveMap<Map<String, String>> im
         List<String> header = new ArrayList<>();
         boolean first = true;
         while ((line = reader.readLine()) != null) {
-            String[] row = line.split(",");
+            String[] row = parseCsvLine(line);
             for (int i = 0; i < row.length; i++) {
                 if (first) {
                     header.add(row[i]);
@@ -107,9 +108,6 @@ public class I18nRunner extends LinkedCaseInsensitiveMap<Map<String, String>> im
                 } else {
                     if (i < header.size()) {
                         if (null != row[i]) {
-                            if (row[i].startsWith("\"") && row[i].endsWith("\"")) {
-                                row[i] = row[i].substring(1, row[i].length() - 1);
-                            }
                             langMappings.get(header.get(i)).put(row[0], row[i]);
                         }
                     }
@@ -117,6 +115,24 @@ public class I18nRunner extends LinkedCaseInsensitiveMap<Map<String, String>> im
             }
             first = false;
         }
+    }
+
+    private String[] parseCsvLine(String line) {
+        List<String> result = new ArrayList<>();
+        StringBuilder sb = new StringBuilder();
+        boolean inQuotes = false;
+        for (char c : line.toCharArray()) {
+            if (c == '"') {
+                inQuotes = !inQuotes;
+            } else if (c == ',' && !inQuotes) {
+                result.add(sb.toString());
+                sb = new StringBuilder();
+            } else {
+                sb.append(c);
+            }
+        }
+        result.add(sb.toString());
+        return result.toArray(new String[0]);
     }
 
 }

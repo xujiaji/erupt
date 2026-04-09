@@ -6,6 +6,7 @@ import lombok.Setter;
 import xyz.erupt.annotation.Erupt;
 import xyz.erupt.core.constant.MenuStatus;
 import xyz.erupt.core.constant.MenuTypeEnum;
+import xyz.erupt.core.i18n.I18nTranslate;
 
 /**
  * @author YuePeng

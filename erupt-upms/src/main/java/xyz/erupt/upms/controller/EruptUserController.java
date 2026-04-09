@@ -3,6 +3,8 @@ package xyz.erupt.upms.controller;
 import com.google.gson.reflect.TypeToken;
 import com.wf.captcha.SpecCaptcha;
 import com.wf.captcha.base.Captcha;
+import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.SneakyThrows;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,6 +23,7 @@ import xyz.erupt.upms.fun.LoginProxy;
 import xyz.erupt.upms.model.EruptRole;
 import xyz.erupt.upms.model.EruptUser;
 import xyz.erupt.upms.prop.EruptAppProp;
+import xyz.erupt.upms.prop.EruptUpmsProp;
 import xyz.erupt.upms.service.EruptContextService;
 import xyz.erupt.upms.service.EruptSessionService;
 import xyz.erupt.upms.service.EruptTokenService;
@@ -28,9 +31,7 @@ import xyz.erupt.upms.service.EruptUserService;
 import xyz.erupt.upms.vo.EruptMenuVo;
 import xyz.erupt.upms.vo.EruptUserinfoVo;
 
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -57,18 +58,16 @@ public class EruptUserController {
     private EruptContextService eruptContextService;
 
     @Resource
-    private HttpServletRequest request;
-
-    @Resource
     private EruptTokenService eruptTokenService;
 
+    @Resource
+    private EruptUpmsProp eruptUpmsProp;
+
     /**
-     * 登录
+     * Login
      *
-     * @param account        用户名
-     * @param pwd            密码
-     * @param verifyCode     验证码
-     * @param verifyCodeMark 验证码标识
+     * @param verifyCode     Verification code
+     * @param verifyCodeMark Verification code identifier
      */
     @SneakyThrows
     @GetMapping(value = "/login")
@@ -101,10 +100,9 @@ public class EruptUserController {
             }
         }
         if (loginModel.isPass()) {
-            request.getSession().invalidate();
             EruptUser eruptUser = loginModel.getEruptUser();
             loginModel.setToken(Erupts.generateCode(16));
-            loginModel.setExpire(this.eruptUserService.getExpireTime());
+            loginModel.setExpire(LocalDateTime.now().plusMinutes(eruptUpmsProp.getExpireTimeByLogin()));
             loginModel.setResetPwd(null == eruptUser.getResetPwdTime());
             if (null != loginProxy) loginProxy.loginSuccess(eruptUser, loginModel.getToken());
             eruptTokenService.loginToken(eruptUser, loginModel.getToken());
@@ -113,14 +111,6 @@ public class EruptUserController {
         return loginModel;
     }
 
-
-    /**
-     * 修改密码
-     *
-     * @param pwd     旧密码
-     * @param newPwd  新密码
-     * @param newPwd2 确认新密码
-     */
     @GetMapping(value = "/change-pwd")
     @EruptRouter(verifyType = EruptRouter.VerifyType.LOGIN)
     public EruptApiModel changePwd(@RequestParam("pwd") String pwd, @RequestParam("newPwd") String newPwd, @RequestParam("newPwd2") String newPwd2) {
@@ -130,13 +120,13 @@ public class EruptUserController {
         return eruptUserService.changePwd(eruptUserService.getCurrentAccount(), pwd, newPwd, newPwd2);
     }
 
-    //用户信息
     @GetMapping("/userinfo")
     @EruptRouter(verifyType = EruptRouter.VerifyType.LOGIN)
     public EruptUserinfoVo userinfo() {
         EruptUser eruptUser = eruptUserService.getCurrentEruptUser();
         EruptUserinfoVo userinfoVo = new EruptUserinfoVo();
         userinfoVo.setNickname(eruptUser.getName());
+        userinfoVo.setAvatar(eruptUser.getAvatar());
         userinfoVo.setResetPwd(null == eruptUser.getResetPwdTime());
         Optional.ofNullable(eruptUser.getEruptOrg()).ifPresent(it -> userinfoVo.setOrg(it.getCode()));
         Optional.ofNullable(eruptUser.getEruptPost()).ifPresent(it -> userinfoVo.setPost(it.getCode()));
@@ -148,7 +138,6 @@ public class EruptUserController {
         return userinfoVo;
     }
 
-    //获取菜单列表
     @GetMapping("/menu")
     @EruptRouter(verifyType = EruptRouter.VerifyType.LOGIN)
     public List<EruptMenuVo> getMenu() {
@@ -158,7 +147,6 @@ public class EruptUserController {
         return menus;
     }
 
-    //登出
     @GetMapping(value = "/logout")
     @EruptRouter(verifyType = EruptRouter.VerifyType.LOGIN)
     public EruptApiModel logout() {
@@ -171,17 +159,17 @@ public class EruptUserController {
     }
 
     /**
-     * 生成验证码
+     * Generate verification code
      *
-     * @param mark   生成验证码标记值
-     * @param height 验证码高度
+     * @param mark   Generate the verification code marking value
+     * @param height Height of the verification code
      */
     @GetMapping("/code-img")
     public void createCode(HttpServletResponse response, @RequestParam long mark,
                            @RequestParam(required = false, defaultValue = "38") Integer height) throws Exception {
-        response.setContentType("image/jpeg"); // 设置响应的类型格式为图片格式
+        response.setContentType("image/jpeg"); // Set the response type format to image format
         response.setDateHeader("Expires", 0);
-        response.setHeader("Pragma", "no-cache"); // 禁止图像缓存
+        response.setHeader("Pragma", "no-cache"); // Prohibit image caching
         response.setHeader("Cache-Control", "no-cache");
         Captcha captcha = new SpecCaptcha(150, height, 4);
         sessionService.put(SessionKey.VERIFY_CODE + mark, captcha.text(), 60, TimeUnit.SECONDS);

@@ -1,6 +1,6 @@
 package xyz.erupt.annotation.sub_field.sub_edit;
 
-import java.beans.Transient;
+import xyz.erupt.annotation.config.Comment;
 
 /**
  * @author YuePeng
@@ -12,8 +12,12 @@ public @interface VL {
 
     String label();
 
+    @Comment("hex format")
+    String color() default "";
+
     boolean disable() default false;
 
-    @Transient
     String desc() default "";
+
+    String extra() default "";
 }

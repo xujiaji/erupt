@@ -4,12 +4,13 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>erupt-mongodb</artifactId>
+    <name>erupt-mongodb</name>
     <description>EruptProcess mongodb impl</description>
 
     <parent>
         <groupId>com.github.xujiaji.erupt</groupId>
         <artifactId>erupt</artifactId>
-        <version>1.12.17</version>
+        <version>1.13.3</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 

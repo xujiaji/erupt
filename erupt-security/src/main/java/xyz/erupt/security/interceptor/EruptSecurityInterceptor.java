@@ -1,9 +1,13 @@
 package xyz.erupt.security.interceptor;
 
+import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.AsyncHandlerInterceptor;
@@ -25,9 +29,6 @@ import xyz.erupt.upms.prop.EruptUpmsProp;
 import xyz.erupt.upms.service.EruptSessionService;
 import xyz.erupt.upms.service.EruptUserService;
 
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
@@ -56,10 +57,9 @@ public class EruptSecurityInterceptor implements AsyncHandlerInterceptor {
     private EruptSessionService sessionService;
 
     @Override
-    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws IOException {
+    public boolean preHandle(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler) throws IOException {
         EruptRouter eruptRouter = null;
-        if (handler instanceof HandlerMethod) {
-            HandlerMethod handlerMethod = (HandlerMethod) handler;
+        if (handler instanceof HandlerMethod handlerMethod) {
             eruptRouter = handlerMethod.getMethodAnnotation(EruptRouter.class);
         }
         if (null == eruptRouter) return true;
@@ -79,6 +79,7 @@ public class EruptSecurityInterceptor implements AsyncHandlerInterceptor {
             MetaContext.register(new MetaErupt(eruptName, eruptName));
             EruptModel erupt = EruptCoreService.getErupt(eruptName);
             if (null == erupt) {
+                log.warn("Erupt not found: {}", eruptName);
                 response.setStatus(HttpStatus.NOT_FOUND.value());
                 return false;
             }
@@ -91,13 +92,14 @@ public class EruptSecurityInterceptor implements AsyncHandlerInterceptor {
         }
         MetaUserinfo metaUserinfo = eruptUserService.getSimpleUserInfo();
         MetaContext.registerToken(token);
-        MetaContext.register(new MetaUser(metaUserinfo.getId() + "", metaUserinfo.getAccount(), metaUserinfo.getUsername()));
+        MetaContext.register(new MetaUser(metaUserinfo.getId(), metaUserinfo.getAccount(), metaUserinfo.getUsername()));
         //权限校验
         String authStr = request.getServletPath().split("/")[eruptRouter.skipAuthIndex() + eruptRouter.authIndex()];
         switch (eruptRouter.verifyType()) {
-            case LOGIN:
-                break;
-            case MENU:
+            case LOGIN -> {
+
+            }
+            case MENU -> {
                 if (!eruptRouter.verifyHandler().isInterface()) {
                     authStr = EruptSpringUtil.getBean(eruptRouter.verifyHandler()).convertAuthStr(eruptRouter, request, authStr);
                 }
@@ -107,8 +109,8 @@ public class EruptSecurityInterceptor implements AsyncHandlerInterceptor {
                     return false;
                 }
                 MetaContext.register(new MetaErupt(null, authStr));
-                break;
-            case ERUPT:
+            }
+            case ERUPT -> {
                 EruptModel eruptModel = EruptCoreService.getErupt(eruptName);
                 $ep:
                 if (StringUtils.isNotBlank(parentEruptName)) {
@@ -139,11 +141,16 @@ public class EruptSecurityInterceptor implements AsyncHandlerInterceptor {
                     return false;
                 }
                 if (null == eruptUserService.getEruptMenuByValue(eruptModel.getEruptName())) {
+                    if (!eruptRouter.highSafe()) {
+                        if (null != eruptModel.getTags().get("EruptFlow")) {
+                            return true;
+                        }
+                    }
                     response.setStatus(HttpStatus.FORBIDDEN.value());
                     response.sendError(HttpStatus.FORBIDDEN.value());
                     return false;
                 }
-                break;
+            }
         }
         if (eruptProp.isRedisSessionRefresh()) {
             for (String uk : SessionKey.USER_KEY_GROUP) {
@@ -154,7 +161,7 @@ public class EruptSecurityInterceptor implements AsyncHandlerInterceptor {
     }
 
     @Override
-    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
+    public void afterCompletion(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler, Exception ex) {
         try {
             if (HttpStatus.OK.value() == response.getStatus()) {
                 operationService.record(handler, ex);

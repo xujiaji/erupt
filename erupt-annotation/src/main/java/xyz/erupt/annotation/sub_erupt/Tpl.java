@@ -2,6 +2,7 @@ package xyz.erupt.annotation.sub_erupt;
 
 import lombok.Getter;
 import xyz.erupt.annotation.config.Comment;
+import xyz.erupt.annotation.constant.PageEmbedType;
 
 import java.beans.Transient;
 import java.util.Map;
@@ -14,8 +15,7 @@ public @interface Tpl {
 
     boolean enable() default true;
 
-    @Transient
-    @Comment("模板文件路径")
+    @Comment("模板文件路径,或路由地址")
     String path();
 
     @Transient
@@ -29,6 +29,9 @@ public @interface Tpl {
     @Transient
     @Comment("模板引擎")
     Engine engine() default Engine.FreeMarker;
+
+    @Comment("页面嵌入方式：Iframe or 微前端")
+    PageEmbedType embedType() default PageEmbedType.IFRAME;
 
     @Comment("弹出层宽度")
     String width() default "";

@@ -32,20 +32,20 @@ public class EruptAppProp {
     //自定义登录页路径，支持http网络路径
     private String loginPagePath;
 
-    private Integer hash;
-
-    private String version;
-
     //多语言配置
     private String[] locales = {
-            "zh-CN",      // 简体中文
-            "zh-TW",      // 繁体中文
-            "en-US",      // English
-            "fr-FR",      // En français
-            "ja-JP",      // 日本語
-            "ko-KR",      // 한국어
-            "ru-RU",      // русск
-            "es-ES"       // español
+            DEFAULT_LANG, // 🇨🇳 简体中文
+            "zh-TW",      // 🇭🇰 繁体中文
+            "en-US",      // 🇬🇧 English
+            "fr-FR",      // 🇫🇷 En français
+            "ja-JP",      // 🇯🇵 日本語
+            "ko-KR",      // 🇰🇷 한국어
+            "ru-RU",      // 🇷🇺 русск
+            "es-ES",      // 🇪🇸 español
+            "de-DE",      // 🇩🇪 Deutsch
+            "pt-PT",      // 🇵🇹 Português
+            "id-ID",      // 🇮🇩 Bahasa Indonesia
+            "ar-SA",      // 🇸🇦 العربية
     };
 
     //自定义配置
@@ -54,9 +54,13 @@ public class EruptAppProp {
     //重置密码功能开关
     private Boolean resetPwd = true;
 
+    private Integer hash;
+
+    private String version;
+
     public void setLocales(String[] locales) {
         if (null == locales || locales.length == 0) {
-            this.locales = new String[]{"zh-CN"};
+            this.locales = new String[]{DEFAULT_LANG};
         } else {
             this.locales = locales;
         }
@@ -66,6 +70,5 @@ public class EruptAppProp {
     public void registerProp(String key, Object value) {
         this.properties.put(key, value);
     }
-
 
 }

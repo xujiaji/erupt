@@ -1,13 +1,17 @@
 package xyz.erupt.jpa.model;
 
+import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import lombok.Getter;
 import lombok.Setter;
-import xyz.erupt.annotation.PreDataProxy;
-import xyz.erupt.annotation.config.Comment;
+import xyz.erupt.annotation.EruptField;
 import xyz.erupt.annotation.config.EruptSmartSkipSerialize;
+import xyz.erupt.annotation.sub_field.View;
+import xyz.erupt.core.context.MetaContext;
 
-import javax.persistence.MappedSuperclass;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 /**
  * @author YuePeng
@@ -16,23 +20,43 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @MappedSuperclass
-@PreDataProxy(MetaDataProxy.class)
 public class MetaModel extends BaseModel {
 
-    @Comment("创建人")
+    @EruptField(views = @View(title = "创建人", show = false))
     @EruptSmartSkipSerialize
     private String createBy;
 
-    @Comment("创建时间")
+    @EruptField(views = @View(title = "创建时间", show = false))
     @EruptSmartSkipSerialize
     private LocalDateTime createTime;
 
-    @Comment("更新人")
+    @EruptField(views = @View(title = "更新人", show = false))
     @EruptSmartSkipSerialize
     private String updateBy;
 
-    @Comment("更新时间")
+    @EruptField(views = @View(title = "更新时间", show = false))
     @EruptSmartSkipSerialize
     private LocalDateTime updateTime;
+
+    @PrePersist
+    protected void persist() {
+        this.setCreateTime(LocalDateTime.now());
+        Optional.ofNullable(MetaContext.getUser()).ifPresent(it -> {
+            if (null != it.getName()) {
+                this.setCreateBy(it.getName());
+            }
+        });
+        this.update();
+    }
+
+    @PreUpdate
+    protected void update() {
+        this.setUpdateTime(LocalDateTime.now());
+        Optional.ofNullable(MetaContext.getUser()).ifPresent(it -> {
+            if (null != it.getName()) {
+                this.setUpdateBy(it.getName());
+            }
+        });
+    }
 
 }

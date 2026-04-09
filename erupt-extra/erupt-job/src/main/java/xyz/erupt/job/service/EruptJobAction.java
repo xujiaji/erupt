@@ -6,7 +6,6 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.quartz.Job;
 import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import xyz.erupt.core.prop.EruptProp;
@@ -35,6 +34,7 @@ public class EruptJobAction implements Job {
         trigger(eruptJob, (JavaMailSenderImpl) jobDataMap.get(EruptJobService.MAIL_SENDER_KEY));
     }
 
+    @SuppressWarnings("StringConcatenationArgumentToLogCall")
     void trigger(EruptJob eruptJob, JavaMailSenderImpl javaMailSender) {
         if (EruptSpringUtil.getBean(EruptProp.class).isRedisSession()) {
             if (Boolean.FALSE.equals(EruptSpringUtil.getBean(EruptJobService.class).getStringRedisTemplate().opsForValue().setIfAbsent(JOB_KEY + eruptJob.getCode(), eruptJob.getCode(), 999, TimeUnit.MILLISECONDS))) {
@@ -43,42 +43,39 @@ public class EruptJobAction implements Job {
             }
         }
         EruptJobLog eruptJobLog = new EruptJobLog();
-        String handler = eruptJob.getHandler();
-        if (StringUtils.isNotBlank(handler)) {
-            eruptJobLog.setJobId(eruptJob.getId());
-            eruptJobLog.setStartTime(new Date());
-            EruptJobHandler jobHandler = null;
-            try {
-                jobHandler = EruptSpringUtil.getBeanByPath(eruptJob.getHandler(), EruptJobHandler.class);
-                String result = jobHandler.exec(eruptJob.getCode(), eruptJob.getHandlerParam());
-                jobHandler.success(result, eruptJob.getHandlerParam());
-                eruptJobLog.setResultInfo(result);
-                eruptJobLog.setStatus(true);
-            } catch (Exception e) {
-                log.error(eruptJob.getName() + " job error", e);
-                eruptJobLog.setStatus(false);
-                String exceptionTraceStr = ExceptionUtils.getStackTrace(e);
-                eruptJobLog.setErrorInfo(exceptionTraceStr);
-                if (null != jobHandler) jobHandler.error(e, eruptJob.getHandlerParam());
-                //失败通知
-                if (StringUtils.isNotBlank(eruptJob.getNotifyEmails())) {
-                    if (null == javaMailSender) {
-                        log.warn("Sending mailbox not configured");
-                    } else {
-                        SimpleMailMessage message = new SimpleMailMessage();
-                        message.setSubject(eruptJob.getName() + " job error ！！！");
-                        message.setText(exceptionTraceStr);
-                        message.setTo(eruptJob.getNotifyEmails().split("\\|"));
-                        message.setFrom(Objects.requireNonNull(javaMailSender.getUsername()));
-                        javaMailSender.send(message);
-                    }
+        eruptJobLog.setJobId(eruptJob.getId());
+        eruptJobLog.setStartTime(new Date());
+        EruptJobHandler jobHandler = null;
+        try {
+            jobHandler = EruptSpringUtil.getBeanByPath(eruptJob.getHandler(), EruptJobHandler.class);
+            String result = jobHandler.exec(eruptJob.getCode(), eruptJob.getHandlerParam());
+            jobHandler.success(result, eruptJob.getHandlerParam());
+            eruptJobLog.setResultInfo(result);
+            eruptJobLog.setStatus(true);
+        } catch (Exception e) {
+            log.error(eruptJob.getName() + " job error", e);
+            eruptJobLog.setStatus(false);
+            String exceptionTraceStr = ExceptionUtils.getStackTrace(e);
+            eruptJobLog.setErrorInfo(exceptionTraceStr);
+            if (null != jobHandler) jobHandler.error(e, eruptJob.getHandlerParam());
+            // Error Notification
+            if (StringUtils.isNotBlank(eruptJob.getNotifyEmails())) {
+                if (null == javaMailSender) {
+                    log.warn("Sending mailbox not configured");
+                } else {
+                    SimpleMailMessage message = new SimpleMailMessage();
+                    message.setSubject(eruptJob.getName() + " job error ！！！");
+                    message.setText(exceptionTraceStr);
+                    message.setTo(eruptJob.getNotifyEmails().split("\\|"));
+                    message.setFrom(Objects.requireNonNull(javaMailSender.getUsername()));
+                    javaMailSender.send(message);
                 }
             }
-            eruptJobLog.setHandlerParam(eruptJob.getHandlerParam());
-            eruptJobLog.setEndTime(new Date());
-            if (null == eruptJob.getRecordLog() || eruptJob.getRecordLog()) {
-                EruptSpringUtil.getBean(EruptJobService.class).saveJobLog(eruptJobLog);
-            }
+        }
+        eruptJobLog.setHandlerParam(eruptJob.getHandlerParam());
+        eruptJobLog.setEndTime(new Date());
+        if (null == eruptJob.getRecordLog() || eruptJob.getRecordLog()) {
+            EruptSpringUtil.getBean(EruptJobService.class).saveJobLog(eruptJobLog);
         }
     }
 }

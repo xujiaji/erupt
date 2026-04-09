@@ -1,14 +1,15 @@
 package xyz.erupt.cloud.server.model;
 
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.annotations.Type;
 import org.springframework.stereotype.Component;
 import xyz.erupt.annotation.Erupt;
 import xyz.erupt.annotation.EruptField;
 import xyz.erupt.annotation.EruptI18n;
 import xyz.erupt.annotation.constant.AnnotationConst;
+import xyz.erupt.annotation.constant.PageEmbedType;
 import xyz.erupt.annotation.expr.ExprBool;
 import xyz.erupt.annotation.sub_erupt.*;
 import xyz.erupt.annotation.sub_field.Edit;
@@ -22,8 +23,6 @@ import xyz.erupt.annotation.sub_field.sub_edit.TagsType;
 import xyz.erupt.cloud.server.base.CloudServerConst;
 import xyz.erupt.jpa.model.MetaModelUpdateVo;
 import xyz.erupt.upms.handler.ViaMenuValueCtrl;
-
-import javax.persistence.*;
 
 /**
  * @author YuePeng
@@ -40,13 +39,13 @@ import javax.persistence.*;
                 @RowOperation(
                         title = "查看令牌", icon = "fa fa-shield", mode = RowOperation.Mode.SINGLE,
                         show = @ExprBool(exprHandler = ViaMenuValueCtrl.class, params = CloudServerConst.CLOUD_ACCESS_TOKEN_PERMISSION),
-                        type = RowOperation.Type.TPL, tpl = @Tpl(path = "/tpl/node-info.ftl")
+                        type = RowOperation.Type.TPL, tpl = @Tpl(path = "/tpl/node-info.ftl",embedType = PageEmbedType.MICRO_FRONTEND)
                 ),
                 @RowOperation(
                         title = "节点日志", mode = RowOperation.Mode.SINGLE,
-                        ifExpr = "item.version && item.version != '-'",
+                        ifExpr = "item.version && item.version !== '-'",
                         show = @ExprBool(exprHandler = ViaMenuValueCtrl.class, params = CloudServerConst.ERUPT_CLOUD_NODE_LOG),
-                        type = RowOperation.Type.TPL, tpl = @Tpl(path = "/tpl/erupt-log.html", height = "80%", openWay = OpenWay.DRAWER, drawerPlacement = Placement.BOTTOM)
+                        type = RowOperation.Type.TPL, tpl = @Tpl(path = "/tpl/erupt-log.html", height = "80vh", openWay = OpenWay.DRAWER, drawerPlacement = Placement.BOTTOM)
                 ),
         }, layout = @Layout(tableLeftFixed = 1, pageSize = 30)
 )
@@ -115,8 +114,7 @@ public class CloudNode extends MetaModelUpdateVo {
     )
     private String duty;
 
-    @Lob
-    @Type(type = "org.hibernate.type.TextType")
+    @Column(length = AnnotationConst.CONFIG_LENGTH)
     @EruptField(
             views = @View(title = "节点配置"),
             edit = @Edit(title = "节点配置", desc = "配置后可在子节点中读取", type = EditType.CODE_EDITOR, codeEditType = @CodeEditorType(language = "json"))

@@ -1,5 +1,7 @@
 package xyz.erupt.upms.model;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 import xyz.erupt.annotation.Erupt;
@@ -10,9 +12,6 @@ import xyz.erupt.annotation.sub_field.View;
 import xyz.erupt.annotation.sub_field.sub_edit.Search;
 import xyz.erupt.jpa.model.BaseModel;
 
-import javax.persistence.Entity;
-import javax.persistence.Table;
-
 /**
  * @author YuePeng
  * date 2018-11-22.
@@ -20,12 +19,14 @@ import javax.persistence.Table;
 @Entity
 @Table(name = "e_upms_user")
 @Erupt(
-        name = "简单用户对象"
+        name = "用户管理"
 )
 @EruptI18n
 @Getter
 @Setter
 public class EruptUserVo extends BaseModel {
+
+    private String avatar;
 
     @EruptField(
             views = @View(title = "姓名", sortable = true),

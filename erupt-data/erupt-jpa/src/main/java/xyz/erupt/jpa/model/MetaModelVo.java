@@ -1,5 +1,9 @@
 package xyz.erupt.jpa.model;
 
+import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Transient;
 import lombok.Getter;
 import lombok.Setter;
 import xyz.erupt.annotation.EruptField;
@@ -10,10 +14,10 @@ import xyz.erupt.annotation.sub_field.EditType;
 import xyz.erupt.annotation.sub_field.Readonly;
 import xyz.erupt.annotation.sub_field.View;
 import xyz.erupt.annotation.sub_field.sub_edit.DateType;
+import xyz.erupt.core.context.MetaContext;
 
-import javax.persistence.MappedSuperclass;
-import javax.persistence.Transient;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 /**
  * @author YuePeng
@@ -23,7 +27,7 @@ import java.time.LocalDateTime;
 @Setter
 @MappedSuperclass
 @EruptI18n
-public class MetaModelVo extends MetaModel {
+public class MetaModelVo extends BaseModel {
 
     @Transient
     @EruptField(
@@ -34,31 +38,52 @@ public class MetaModelVo extends MetaModel {
 
     @EruptField(
             views = @View(title = "创建人", width = "100px"),
-            edit = @Edit(title = "创建人", readonly = @Readonly)
+            edit = @Edit(title = "创建人", readonly = @Readonly(allowChange = false))
     )
     @EruptSmartSkipSerialize
     private String createBy;
 
     @EruptField(
             views = @View(title = "创建时间", sortable = true),
-            edit = @Edit(title = "创建时间", readonly = @Readonly, dateType = @DateType(type = DateType.Type.DATE_TIME))
+            edit = @Edit(title = "创建时间", readonly = @Readonly(allowChange = false), dateType = @DateType(type = DateType.Type.DATE_TIME))
     )
     @EruptSmartSkipSerialize
     private LocalDateTime createTime;
 
     @EruptField(
             views = @View(title = "更新人", width = "100px"),
-            edit = @Edit(title = "更新人", readonly = @Readonly)
+            edit = @Edit(title = "更新人", readonly = @Readonly(allowChange = false))
     )
     @EruptSmartSkipSerialize
     private String updateBy;
 
     @EruptField(
             views = @View(title = "更新时间", sortable = true),
-            edit = @Edit(title = "更新时间", readonly = @Readonly, dateType = @DateType(type = DateType.Type.DATE_TIME))
+            edit = @Edit(title = "更新时间", readonly = @Readonly(allowChange = false), dateType = @DateType(type = DateType.Type.DATE_TIME))
     )
     @EruptSmartSkipSerialize
     private LocalDateTime updateTime;
+
+    @PrePersist
+    protected void persist() {
+        this.setCreateTime(LocalDateTime.now());
+        Optional.ofNullable(MetaContext.getUser()).ifPresent(it -> {
+            if (null != it.getName()) {
+                this.setCreateBy(it.getName());
+            }
+        });
+        this.update();
+    }
+
+    @PreUpdate
+    protected void update() {
+        this.setUpdateTime(LocalDateTime.now());
+        Optional.ofNullable(MetaContext.getUser()).ifPresent(it -> {
+            if (null != it.getName()) {
+                this.setUpdateBy(it.getName());
+            }
+        });
+    }
 
 
 }

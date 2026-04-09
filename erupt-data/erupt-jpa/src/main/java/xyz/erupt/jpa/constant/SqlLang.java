@@ -8,6 +8,10 @@ public class SqlLang {
 
     public static final String SELECT = "select ";
 
+    public static final String DISTINCT = "distinct ";
+
+    public static final String DOT = ".";
+
     public static final String COMMA = ",";
 
     public static final String AS = " as ";
@@ -18,6 +22,10 @@ public class SqlLang {
 
     public static final String AND = " and ";
 
+    public static final String OR = " or ";
+
     public static final String ORDER_BY = " order by ";
+
+    public static final String EQ = " = ";
 
 }

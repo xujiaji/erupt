@@ -1,11 +1,12 @@
 package xyz.erupt.upms.service;
 
+import jakarta.annotation.Resource;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import xyz.erupt.annotation.exception.EruptException;
 import xyz.erupt.annotation.fun.DataProxy;
 import xyz.erupt.core.constant.MenuStatus;
 import xyz.erupt.core.constant.MenuTypeEnum;
-import xyz.erupt.core.exception.EruptWebApiRuntimeException;
 import xyz.erupt.core.service.EruptCoreService;
 import xyz.erupt.core.util.Erupts;
 import xyz.erupt.core.view.EruptModel;
@@ -16,8 +17,10 @@ import xyz.erupt.upms.model.EruptRole;
 import xyz.erupt.upms.model.EruptUser;
 import xyz.erupt.upms.util.UPMSUtil;
 
-import javax.annotation.Resource;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -45,7 +48,16 @@ public class EruptMenuService implements DataProxy<EruptMenu> {
         } else {
             Set<EruptMenu> menuSet = new HashSet<>();
             eruptUser.getRoles().stream().filter(EruptRole::getStatus).map(EruptRole::getMenus).forEach(menuSet::addAll);
-            return menuSet.stream().filter(it -> it.getStatus() != MenuStatus.DISABLE.getValue()).sorted(Comparator.comparing(EruptMenu::getSort, Comparator.nullsFirst(Integer::compareTo))).collect(Collectors.toList());
+            return menuSet.stream().filter(it -> it.getStatus() != MenuStatus.DISABLE.getValue()).collect(Collectors.toList());
+        }
+    }
+
+    @Override
+    public void validate(EruptMenu eruptMenu) throws EruptException {
+        if (StringUtils.isNotBlank(eruptMenu.getType()) && StringUtils.isBlank(eruptMenu.getValue())) {
+            throw new EruptException("When selecting a menu type, the type value cannot be empty");
+        } else if (StringUtils.isNotBlank(eruptMenu.getValue()) && StringUtils.isBlank(eruptMenu.getType())) {
+            throw new EruptException("When has menu value, the menu type cannot be empty");
         }
     }
 
@@ -59,16 +71,6 @@ public class EruptMenuService implements DataProxy<EruptMenu> {
     @Override
     public void beforeAdd(EruptMenu eruptMenu) {
         if (null == eruptMenu.getCode()) eruptMenu.setCode(Erupts.generateCode());
-        if (StringUtils.isNotBlank(eruptMenu.getType()) && StringUtils.isBlank(eruptMenu.getValue())) {
-            throw new EruptWebApiRuntimeException("When selecting a menu type, the type value cannot be empty");
-        } else if (StringUtils.isNotBlank(eruptMenu.getValue()) && StringUtils.isBlank(eruptMenu.getType())) {
-            throw new EruptWebApiRuntimeException("When has menu value, the menu type cannot be empty");
-        }
-    }
-
-    @Override
-    public void beforeUpdate(EruptMenu eruptMenu) {
-        this.beforeAdd(eruptMenu);
     }
 
 
@@ -108,10 +110,10 @@ public class EruptMenuService implements DataProxy<EruptMenu> {
                         eruptDao.merge(subMenu);
                     }
                 } catch (Exception ignore) {
-
                 }
             }
         }
+        this.flushMenuCache();
     }
 
     @Override

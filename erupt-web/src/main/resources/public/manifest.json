@@ -1,7 +1,7 @@
 {
     "name": "erupt",
     "short_name": "erupt",
-    "description": "Erupt Framework",
+    "description": "Erupt Engine",
     "author": "YuePeng",
     "mode": "fullscreen",
     "theme_color": "#05192c",
@@ -17,7 +17,7 @@
             "purpose": "any"
         },
         {
-            "src": "assets/logo-2x.png",
+            "src": "assets/logo-1x.png",
             "sizes": "300x300",
             "type": "image/png",
             "purpose": "any"

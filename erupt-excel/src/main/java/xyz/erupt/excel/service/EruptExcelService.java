@@ -7,6 +7,7 @@ import org.apache.poi.hssf.usermodel.DVConstraint;
 import org.apache.poi.hssf.usermodel.HSSFDataValidation;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.CellRangeAddressList;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,7 @@ import xyz.erupt.excel.util.ExcelUtil;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author YuePeng
@@ -48,7 +50,7 @@ public class EruptExcelService {
     private static final String SIMPLE_CELL_ERR = "请选择或输入有效的选项，或下载最新模版重试！";
 
     /**
-     * excel导出，展示的格式和view表格一致
+     * Excel export, the displayed format is consistent with the view table.
      *
      * @return Workbook
      */
@@ -58,7 +60,7 @@ public class EruptExcelService {
         Workbook wb = new XSSFWorkbook();
         Sheet sheet = wb.createSheet(eruptModel.getErupt().name());
         sheet.setZoom(160);
-        //冻结首行
+        // Freeze the first line
         sheet.createFreezePane(0, 1, 1, 1);
         int rowIndex = 0;
         int colNum = 0;
@@ -136,7 +138,7 @@ public class EruptExcelService {
             Edit edit = eruptFieldModel.getEruptField().edit();
             switch (edit.type()) {
                 case CHOICE:
-                    Map<String, String> map = EruptUtil.getChoiceMap(eruptModel, edit.choiceType());
+                    Map<String, String> map = EruptUtil.getChoiceMap(eruptModel, edit);
                     Map<String, Object> choiceMap = new HashMap<>(map.size());
                     for (Map.Entry<String, String> entry : map.entrySet()) {
                         choiceMap.put(entry.getValue(), entry.getKey());
@@ -228,7 +230,13 @@ public class EruptExcelService {
                             jsonObject.addProperty(eruptFieldModel.getFieldName(), bool);
                             break;
                         case DATE:
-                            jsonObject.addProperty(eruptFieldModel.getFieldName(), DateUtil.getSimpleFormatDateTime(cell.getDateCellValue()));
+                            Date dateCellValue;
+                            try {
+                                dateCellValue = cell.getDateCellValue();
+                            } catch (Exception e) {
+                                dateCellValue = DateUtil.parseDate(cell.getStringCellValue());
+                            }
+                            jsonObject.addProperty(eruptFieldModel.getFieldName(), DateUtil.getSimpleFormatDateTime(dateCellValue));
                             break;
                         case NUMBER:
                             DataFormatter formatter = new DataFormatter();
@@ -241,7 +249,7 @@ public class EruptExcelService {
                     }
                 }
             }
-            if (jsonObject.size() > 0) {
+            if (!jsonObject.isEmpty()) {
                 listObject.add(jsonObject);
             }
         }
@@ -250,30 +258,22 @@ public class EruptExcelService {
 
     private String getStringCellValue(Cell cell) {
         CellType cellType = cell.getCellType();
-        switch (cellType) {
-            case NUMERIC:
-                return String.valueOf(cell.getNumericCellValue());
-            case STRING:
-                return cell.getStringCellValue();
-            case BOOLEAN:
-                return String.valueOf(cell.getBooleanCellValue());
-            case FORMULA:
-                return cell.getCellFormula();
-            case ERROR:
-                return String.valueOf(cell.getErrorCellValue());
-            case BLANK:
-            default:
-                return StringUtils.EMPTY;
-        }
+        return switch (cellType) {
+            case NUMERIC -> new DataFormatter().formatCellValue(cell);
+            case STRING -> cell.getStringCellValue();
+            case BOOLEAN -> String.valueOf(cell.getBooleanCellValue());
+            case FORMULA -> cell.getCellFormula();
+            case ERROR -> String.valueOf(cell.getErrorCellValue());
+            default -> StringUtils.EMPTY;
+        };
     }
 
-    //模板的格式和edit输入框一致
+    // The format of the template is the same as that of the "edit" input box.
     public Workbook createExcelTemplate(EruptModel eruptModel) {
         Workbook wb = new HSSFWorkbook();
-        //基本信息
         Sheet sheet = wb.createSheet(eruptModel.getErupt().name());
         sheet.setZoom(160);
-        //冻结首行
+        // Freeze the first line
         sheet.createFreezePane(0, 1, 1, 1);
         Row headRow = sheet.createRow(0);
         int cellNum = 0;
@@ -282,7 +282,7 @@ public class EruptExcelService {
             if (edit.show() && !edit.readonly().add() && StringUtils.isNotBlank(edit.title())
                     && AnnotationProcess.getEditTypeMapping(edit.type()).excelOperator()) {
                 Cell cell = headRow.createCell(cellNum);
-                //单字节宽度为256
+                // The single-byte width is 256.
                 sheet.setColumnWidth(cellNum, (edit.title().length() + 10) * 256);
                 DataValidationHelper dvHelper = sheet.getDataValidationHelper();
                 switch (edit.type()) {
@@ -291,21 +291,15 @@ public class EruptExcelService {
                                 edit.boolType().falseText()})));
                         break;
                     case CHOICE:
-                        List<VLModel> vls = EruptUtil.getChoiceList(eruptModel, fieldModel.getEruptField().edit().choiceType());
-                        String[] arr = new String[vls.size()];
-                        long length = 0;
-                        for (int i = 0; i < vls.size(); i++) {
-                            arr[i] = vls.get(i).getLabel();
-                            length += arr[i].length();
-                        }
-                        //下拉框不允许超过255字节
-                        if (length <= 255) {
-                            sheet.addValidationData(generateValidation(cellNum, SIMPLE_CELL_ERR, DVConstraint.createExplicitListConstraint(arr)));
+                        List<VLModel> vls = EruptUtil.getChoiceList(eruptModel,
+                                fieldModel.getEruptField().edit()).stream().filter(it -> !it.isDisable()).collect(Collectors.toList());
+                        if (!vls.isEmpty()) {
+                            this.createDropDown(fieldModel, sheet, vls, new CellRangeAddress(1, 1000, cellNum, cellNum));
                         }
                         break;
                     case SLIDER:
                         sheet.addValidationData(generateValidation(cellNum,
-                                "请选择或输入有效的选项，区间：" + edit.sliderType().min() + " - " + edit.sliderType().max(), dvHelper.createNumericConstraint(
+                                "Select or enter a valid option, range: " + edit.sliderType().min() + " - " + edit.sliderType().max(), dvHelper.createNumericConstraint(
                                         DataValidationConstraint.ValidationType.INTEGER, DataValidationConstraint.OperatorType.BETWEEN,
                                         Integer.toString(edit.sliderType().min()), Integer.toString(edit.sliderType().max()))));
                         break;
@@ -313,7 +307,7 @@ public class EruptExcelService {
                         if (fieldModel.getFieldReturnName().equals(Date.class.getSimpleName())
                                 || fieldModel.getFieldReturnName().equals(LocalDate.class.getSimpleName())
                                 || fieldModel.getFieldReturnName().equals(LocalDateTime.class.getSimpleName())) {
-                            sheet.addValidationData(generateValidation(cellNum, "请选择或输入有效时间！"
+                            sheet.addValidationData(generateValidation(cellNum, "Please select or enter the valid time！"
                                     , dvHelper.createDateConstraint(DVConstraint.OperatorType.BETWEEN
                                             , "1900-01-01", "2999-12-31", "yyyy-MM-dd")));
                         }
@@ -321,7 +315,7 @@ public class EruptExcelService {
                     default:
                         break;
                 }
-                //单元格格式
+                // Cell format
                 CellStyle style = wb.createCellStyle();
                 style.setLocked(true);
                 Font font = wb.createFont();
@@ -337,7 +331,6 @@ public class EruptExcelService {
                 }
                 style.setFont(font);
                 cell.setCellStyle(style);
-                //值
                 cell.setCellValue(fieldModel.getEruptField().edit().title());
                 cellNum++;
             }
@@ -346,12 +339,36 @@ public class EruptExcelService {
     }
 
     private DataValidation generateValidation(int colIndex, String errHint, DataValidationConstraint constraint) {
-        // 设置数据有效性加载在哪个单元格上。
-        // 四个参数分别是：起始行、终止行、起始列、终止列
+        // Set where the data validation is loaded.
+        // The four parameters are: starting row, ending row, starting column, ending column
         CellRangeAddressList regions = new CellRangeAddressList(1, 1000, colIndex, colIndex);
         DataValidation dataValidationList = new HSSFDataValidation(regions, constraint);
-        dataValidationList.createErrorBox("错误", errHint);
+        dataValidationList.createErrorBox("error", errHint);
         return dataValidationList;
+    }
+
+    public void createDropDown(EruptFieldModel fieldModel, Sheet targetSheet,
+                               List<VLModel> options, CellRangeAddress targetRegion) {
+        Workbook workbook = targetSheet.getWorkbook();
+        Sheet dictSheet = workbook.createSheet(fieldModel.getFieldName());
+        workbook.setSheetHidden(workbook.getSheetIndex(dictSheet), true);
+        for (int i = 0; i < options.size(); i++) {
+            Row row = dictSheet.createRow(i);
+            row.createCell(0).setCellValue(options.get(i).getLabel());
+        }
+        String rangeAddress = dictSheet.getSheetName() + "!$A$1:$A$" + options.size();
+        Name name = workbook.createName();
+        name.setNameName(fieldModel.getFieldName() + "Range_" + System.nanoTime());
+        name.setRefersToFormula(rangeAddress);
+
+        DataValidationHelper helper = targetSheet.getDataValidationHelper();
+        DataValidationConstraint constraint = helper.createFormulaListConstraint(name.getNameName());
+        DataValidation validation = helper.createValidation(constraint, new CellRangeAddressList(
+                targetRegion.getFirstRow(), targetRegion.getLastRow(),
+                targetRegion.getFirstColumn(), targetRegion.getLastColumn()));
+        validation.setShowErrorBox(true);
+        validation.setSuppressDropDownArrow(false);
+        targetSheet.addValidationData(validation);
     }
 
 }

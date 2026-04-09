@@ -1,5 +1,6 @@
 package xyz.erupt.annotation;
 
+import org.intellij.lang.annotations.Language;
 import xyz.erupt.annotation.config.Comment;
 import xyz.erupt.annotation.config.Match;
 import xyz.erupt.annotation.config.ToMap;
@@ -19,6 +20,7 @@ import java.lang.annotation.*;
 public @interface Erupt {
 
     @Comment("主键列名")
+    @Language(value = "java", prefix = "private String ", suffix = ";")
     String primaryKeyCol() default "id";
 
     @Transient
@@ -48,6 +50,7 @@ public @interface Erupt {
 
     @Transient
     @Comment("排序表达式")
+    @Language(value = "hql", prefix = "select * from t order by ")
     String orderBy() default "";
 
     @Transient
@@ -64,19 +67,16 @@ public @interface Erupt {
     @Comment("左树右表配置项")
     LinkTree linkTree() default @LinkTree(field = "");
 
-    //布局配置
     Layout layout() default @Layout;
 
-//    @Comment("画册视图定义")
-//    @Match("#value.enable() == true")
-//    Card cardView() default @Card(enable = false, galleryField = "", viewFields = {});
+    boolean visRawTable() default true;
+
+    Vis[] vis() default {};
 
     @ToMap(key = "key")
     @Comment("自定义扩展参数")
     KV[] param() default {};
 
-    @Deprecated
-    @Transient
-    Class<? extends Annotation> extra() default Annotation.class;
+    Class<? extends Annotation>[] extra() default {};
 
 }

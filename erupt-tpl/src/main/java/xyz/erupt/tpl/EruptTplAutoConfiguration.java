@@ -1,5 +1,6 @@
 package xyz.erupt.tpl;
 
+import jakarta.annotation.Resource;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -10,8 +11,6 @@ import xyz.erupt.core.module.EruptModule;
 import xyz.erupt.core.module.EruptModuleInvoke;
 import xyz.erupt.core.module.ModuleInfo;
 import xyz.erupt.tpl.service.EruptTplService;
-
-import javax.annotation.Resource;
 
 /**
  * @author YuePeng
@@ -25,8 +24,9 @@ public class EruptTplAutoConfiguration implements EruptModule {
 
     static {
         EruptModuleInvoke.addEruptModule(EruptTplAutoConfiguration.class);
-        MenuTypeEnum.addMenuType(new VLModel(EruptTplService.TPL, "自定义模板", "tpl目录下文件名"));
-//        MenuTypeEnum.addMenuType(new VLModel(EruptTplService.TPL_MICRO, "模板（微前端 Beta）", "tpl目录下文件名"));
+        String tip = "File Name under the tpl Directory";
+        MenuTypeEnum.addMenuType(new VLModel(EruptTplService.TPL, "menu_type_tpl_iframe", tip));
+        MenuTypeEnum.addMenuType(new VLModel(EruptTplService.TPL_MICRO, "menu_type_tpl_micro", tip));
     }
 
     @Resource
@@ -39,7 +39,7 @@ public class EruptTplAutoConfiguration implements EruptModule {
 
     @Override
     public ModuleInfo info() {
-        return ModuleInfo.builder().name("erupt-tpl").build();
+        return ModuleInfo.builder().name("erupt-tpl").description("Erupt Template Engine").build();
     }
 
 }

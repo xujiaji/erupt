@@ -2,13 +2,15 @@ package xyz.erupt.upms.service;
 
 import com.google.gson.Gson;
 import eu.bitwalker.useragentutils.UserAgent;
+import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import xyz.erupt.core.config.GsonFactory;
 import xyz.erupt.core.i18n.I18nTranslate;
 import xyz.erupt.core.module.MetaUserinfo;
-import xyz.erupt.core.prop.EruptProp;
 import xyz.erupt.core.service.EruptApplication;
 import xyz.erupt.core.util.DateUtil;
 import xyz.erupt.core.util.EruptSpringUtil;
@@ -26,14 +28,11 @@ import xyz.erupt.upms.prop.EruptAppProp;
 import xyz.erupt.upms.prop.EruptUpmsProp;
 import xyz.erupt.upms.util.IpUtil;
 
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
-import javax.transaction.Transactional;
-import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -55,9 +54,6 @@ public class EruptUserService {
 
     @Resource
     private EruptAppProp eruptAppProp;
-
-    @Resource
-    private EruptProp eruptProp;
 
     @Resource
     private EruptUpmsProp eruptUpmsProp;
@@ -85,7 +81,7 @@ public class EruptUserService {
         if (null != loginError) {
             loginErrorCount = Integer.parseInt(loginError.toString());
         }
-        sessionService.put(key, ++loginErrorCount + "", eruptUpmsProp.getExpireTimeByLogin());
+        sessionService.put(key, ++loginErrorCount + "", eruptUpmsProp.getExpireTimeByLogin(), TimeUnit.MINUTES);
         return loginErrorCount >= eruptAppProp.getVerifyCodeCount();
     }
 
@@ -93,19 +89,18 @@ public class EruptUserService {
         String requestIp = IpUtil.getIpAddr(request);
         EruptUser eruptUser = this.findEruptUserByAccount(account);
         if (null != eruptUser) {
-            if (!eruptUser.getStatus()) return new LoginModel(false, "账号已锁定!");
+            if (!eruptUser.getStatus()) return new LoginModel(false, "Account has been locked.!");
             if (null != eruptUser.getExpireDate()) {
                 if (eruptUser.getExpireDate().getTime() < System.currentTimeMillis()) {
-                    return new LoginModel(false, String.format("账号在 %s 失效", DateUtil.getSimpleFormatDate(eruptUser.getExpireDate())));
+                    return new LoginModel(false, String.format("The account has become invalid at %s.", DateUtil.getSimpleFormatDate(eruptUser.getExpireDate())));
                 }
             }
             if (StringUtils.isNotBlank(eruptUser.getWhiteIp())) {
                 if (Arrays.stream(eruptUser.getWhiteIp().split("\n")).noneMatch(ip -> ip.equals(requestIp))) {
-                    return new LoginModel(false, "当前 ip 无权访问");
+                    return new LoginModel(false, "Your IP address does not have the authority to access.");
                 }
             }
             if (this.checkPwd(eruptUser.getAccount(), eruptUser.getPassword(), eruptUser.getIsMd5(), pwd)) {
-                request.getSession().invalidate();
                 sessionService.remove(SessionKey.LOGIN_ERROR + account + ":" + requestIp);
                 return new LoginModel(true, eruptUser);
             }
@@ -114,13 +109,13 @@ public class EruptUserService {
     }
 
     /**
-     * 校验密码
+     * Verify password
      *
-     * @param account  账号
-     * @param password 密码
-     * @param isMd5    是否加密
-     * @param inputPwd 前端输入的密码
-     * @return 密码是否正确
+     * @param account  account
+     * @param password password
+     * @param isMd5    Is it encrypted
+     * @param inputPwd The password entered at the front end
+     * @return Is the password correct?
      */
     public boolean checkPwd(String account, String password, boolean isMd5, String inputPwd) {
         if (eruptAppProp.getPwdTransferEncrypt()) {
@@ -130,14 +125,6 @@ public class EruptUserService {
         } else {
             if (isMd5) inputPwd = MD5Util.digest(inputPwd);
             return inputPwd.equals(password);
-        }
-    }
-
-    public LocalDateTime getExpireTime() {
-        if (eruptProp.isRedisSession()) {
-            return LocalDateTime.now().plusMinutes(eruptUpmsProp.getExpireTimeByLogin());
-        } else {
-            return LocalDateTime.now().plusSeconds(request.getSession().getMaxInactiveInterval());
         }
     }
 
@@ -174,7 +161,7 @@ public class EruptUserService {
     @Transactional
     public EruptApiModel changePwd(String account, String pwd, String newPwd, String newPwd2) {
         if (!newPwd.equals(newPwd2)) {
-            return EruptApiModel.errorNoInterceptMessage("修改失败，新密码与确认密码不匹配");
+            return EruptApiModel.errorMessageApi("修改失败，新密码与确认密码不匹配");
         }
         EruptUser eruptUser = findEruptUserByAccount(account);
         LoginProxy loginProxy = EruptUserService.findEruptLogin();
@@ -187,7 +174,7 @@ public class EruptUserService {
         }
         if (eruptUser.getPassword().equals(pwd)) {
             if (newPwd.equals(eruptUser.getPassword())) {
-                return EruptApiModel.errorNoInterceptMessage("修改失败，新密码不能和原始密码一样");
+                return EruptApiModel.errorMessageApi("修改失败，新密码不能和原始密码一样");
             }
             eruptUser.setPassword(newPwd);
             eruptUser.setResetPwdTime(new Date());
@@ -197,7 +184,7 @@ public class EruptUserService {
             }
             return EruptApiModel.successApi();
         } else {
-            return EruptApiModel.errorNoInterceptMessage("密码错误");
+            return EruptApiModel.errorMessageApi("密码错误");
         }
     }
 

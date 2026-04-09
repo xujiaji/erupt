@@ -1,12 +1,15 @@
 package xyz.erupt.core.cache;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- * LRU 缓存实现
+ * LRU Cache
  *
  * @author mxd
  */
@@ -18,12 +21,11 @@ public class EruptCacheLRU<V> extends LinkedHashMap<String, EruptCacheLRU.Expire
 
     public EruptCacheLRU(int capacity) {
         super((int) Math.ceil(capacity / 0.75) + 1, 0.75f, true);
-        // 容量
         this.capacity = capacity;
     }
 
     /**
-     * @param ttl 单位：毫秒
+     * @param ttl Unit: Millisecond
      */
     @Override
     public V put(String key, V v, long ttl) {
@@ -55,15 +57,27 @@ public class EruptCacheLRU<V> extends LinkedHashMap<String, EruptCacheLRU.Expire
                 lock.writeLock().unlock();
             }
             return null;
+        } else {
+            expireNode.setExpire(expireNode.getExpire() + 100);
         }
         return expireNode.value;
+    }
+
+    @Override
+    public void expire(String key, long ttl) {
+        super.get(key).setExpire(System.currentTimeMillis() + ttl);
+    }
+
+    @Override
+    public Long getExpire(String key) {
+        return super.get(key).expire - System.currentTimeMillis();
     }
 
     @Override
     public void delete(String key) {
         try {
             lock.writeLock().lock();
-            this.remove(key);
+            super.remove(key);
         } finally {
             lock.writeLock().unlock();
         }
@@ -75,8 +89,13 @@ public class EruptCacheLRU<V> extends LinkedHashMap<String, EruptCacheLRU.Expire
         return this.size() > this.capacity;
     }
 
+    @Override
+    public ExpireNode<V> remove(Object key) {
+        throw new UnsupportedOperationException();
+    }
+
     /**
-     * 清理已过期的数据
+     * Remove the expired data
      */
     protected void clean() {
         try {
@@ -85,7 +104,6 @@ public class EruptCacheLRU<V> extends LinkedHashMap<String, EruptCacheLRU.Expire
             long now = System.currentTimeMillis();
             while (iterator.hasNext()) {
                 Map.Entry<String, ExpireNode<V>> next = iterator.next();
-                // 判断是否过期
                 if (next.getValue().expire < now) iterator.remove();
             }
         } finally {
@@ -95,12 +113,14 @@ public class EruptCacheLRU<V> extends LinkedHashMap<String, EruptCacheLRU.Expire
 
 
     /**
-     * 过期时间节点
+     * Expiry time point
      */
+    @Getter
+    @Setter
     public static class ExpireNode<V> {
-        private final long expire;
+        private long expire;
 
-        private final V value;
+        private V value;
 
         ExpireNode(long expire, V value) {
             this.expire = expire;

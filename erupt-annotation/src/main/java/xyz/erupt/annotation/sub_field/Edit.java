@@ -1,5 +1,6 @@
 package xyz.erupt.annotation.sub_field;
 
+import org.intellij.lang.annotations.Language;
 import xyz.erupt.annotation.config.Comment;
 import xyz.erupt.annotation.config.EruptProperty;
 import xyz.erupt.annotation.config.Match;
@@ -29,6 +30,12 @@ public @interface Edit {
     boolean show() default true;
 
     @Transient
+    @Comment("可被 onchange 接口获取到")
+    String[] onchangeParams() default {};
+
+    Class<? extends OnChange> onchange() default OnChange.class;
+
+    @Transient
     @Comment("动态渲染配置")
     ExprBool ifRender() default @ExprBool;
 
@@ -39,15 +46,16 @@ public @interface Edit {
     @Comment("表单提示信息")
     String placeHolder() default "";
 
-    @Match("#value.dependField() != ''")
-    @Comment("显示依赖")
-    ShowBy showBy() default @ShowBy(dependField = "", expr = "");
+    @Match("#value.condition() != ''")
+    @Comment("表单动态处理")
+    Dynamic dynamic() default @Dynamic(dependField = "", condition = "");
 
     @Comment("查询项")
     Search search() default @Search(false);
 
     @Transient
     @Comment("排序表达式，在修饰类型为 ORM 对象时可用")
+    @Language(value = "sql", prefix = "select * from t order by")
     String orderBy() default "";
 
     @Transient
@@ -78,6 +86,9 @@ public @interface Edit {
     @Match("#item.type().toString()=='CHOICE'")
     ChoiceType choiceType() default @ChoiceType;
 
+    @Match("#item.type().toString()=='MULTI_CHOICE'")
+    MultiChoiceType multiChoiceType() default @MultiChoiceType;
+
     @Match("#item.type().toString()=='TAGS'")
     TagsType tagsType() default @TagsType;
 
@@ -93,7 +104,7 @@ public @interface Edit {
     @Match("#item.type().toString()=='REFERENCE_TREE'")
     ReferenceTreeType referenceTreeType() default @ReferenceTreeType;
 
-    @Match("#item.type().toString()=='REFERENCE_TABLE'")
+    @Match("#item.type().toString()=='REFERENCE_TABLE' || #item.type().toString()=='TAB_TABLE_REFER'")
     ReferenceTableType referenceTableType() default @ReferenceTableType;
 
     @Transient
@@ -103,6 +114,6 @@ public @interface Edit {
     CodeEditorType codeEditType() default @CodeEditorType(language = "text");
 
     @Transient
-    Tpl tplType() default @Tpl(path = "");
+    Tpl tplType() default @Tpl(path = "", enable = false);
 
 }

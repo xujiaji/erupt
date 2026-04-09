@@ -2,6 +2,7 @@ package xyz.erupt.annotation.fun;
 
 import lombok.Getter;
 import lombok.Setter;
+import xyz.erupt.annotation.sub_field.sub_edit.VL;
 
 /**
  * @author YuePeng
@@ -15,13 +16,14 @@ public class VLModel {
 
     private String label;
 
-    // 额外描述
     private String desc;
 
-    // 是否禁用
+    private String color;
+
     private boolean disable;
 
-//    private String color; //标签颜色
+    // Custom extension value
+    private Object extra;
 
     public VLModel(Long value, String label) {
         this.value = value + "";
@@ -42,15 +44,24 @@ public class VLModel {
     public VLModel(String value, String label, boolean disable) {
         this.value = value;
         this.label = label;
-        this.desc = desc;
         this.disable = disable;
     }
 
-    public VLModel(String value, String label, String desc, boolean disable) {
+    public VLModel(String value, String label, String desc, String color, boolean disable) {
         this.value = value;
         this.label = label;
         this.desc = desc;
+        this.color = color;
         this.disable = disable;
+    }
+
+    public VLModel(VL vl) {
+        this.value = vl.value();
+        this.label = vl.label();
+        this.desc = vl.desc();
+        this.color = vl.color();
+        this.disable = vl.disable();
+        this.extra = vl.extra();
     }
 
     public VLModel() {

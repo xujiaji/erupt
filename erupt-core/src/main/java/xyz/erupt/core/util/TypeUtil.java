@@ -4,7 +4,9 @@ import lombok.SneakyThrows;
 import org.apache.commons.lang3.math.NumberUtils;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.function.Consumer;
 
 /**
@@ -20,27 +22,33 @@ public class TypeUtil {
     };
 
     /**
-     * 将未知类型转换为目标类型
+     * Convert the unknown type to the target type
      */
     @SneakyThrows
     public static Object typeStrConvertObject(Object obj, Class<?> targetType) {
-        String str = obj.toString();
+        String val = obj.toString();
+        String str = val;
+        if (NumberUtils.isCreatable(val)) {
+            if (val.endsWith(".0")) {
+                val = val.substring(0, val.length() - 2);
+            }
+        }
         if (int.class == targetType || Integer.class == targetType) {
-            return Integer.valueOf(str);
+            return Integer.valueOf(val);
         } else if (short.class == targetType || Short.class == targetType) {
-            return Short.valueOf(str);
+            return Short.valueOf(val);
         } else if (long.class == targetType || Long.class == targetType) {
-            return Long.valueOf(str);
+            return Long.valueOf(val);
         } else if (float.class == targetType || Float.class == targetType) {
-            return Float.valueOf(str);
+            return Float.valueOf(val);
         } else if (double.class == targetType || Double.class == targetType) {
-            return Double.valueOf(str);
+            return Double.valueOf(val);
         } else if (BigDecimal.class == targetType) {
-            return new BigDecimal(str);
+            return new BigDecimal(val);
         } else if (boolean.class == targetType || Boolean.class == targetType) {
-            return Boolean.valueOf(str);
+            return Boolean.valueOf(val);
         } else if (targetType.isEnum()) {
-            return targetType.getMethod("valueOf", String.class).invoke(targetType, str);
+            return targetType.getMethod("valueOf", String.class).invoke(targetType, val);
         } else {
             return str;
         }
@@ -70,7 +78,7 @@ public class TypeUtil {
         }
     }
 
-    // 判断实体类字段返回值是否为基本类型（包括String与date）
+    // Determine whether the return value of the entity class field is a basic type (including String and date)
     public static boolean isFieldSimpleType(String typeName) {
         return Arrays.asList(SIMPLE_JPA_TYPE).contains(typeName.toLowerCase());
     }
@@ -79,9 +87,31 @@ public class TypeUtil {
         return Arrays.asList(NUMBER_TYPE).contains(typeName.toLowerCase());
     }
 
-    //判断是否为数值类型
+    // Determine whether it is a numeric type
     public static boolean isNumber(Object obj) {
         return obj instanceof Number || NumberUtils.isCreatable(obj.toString());
+    }
+
+    public static Integer fetchInt(Object value) {
+        if (value instanceof String) {
+            return Integer.parseInt(value.toString());
+        } else if (value instanceof Integer) {
+            return (Integer) value;
+        } else if (value instanceof Long v) {
+            return v.intValue();
+        } else {
+            return ((Double) value).intValue();
+        }
+    }
+
+    public static String arrayToConditonString(List<Object> objects, Class<?> target) {
+        List<String> values = new ArrayList<>();
+        for (Object o : objects) {
+            Object val = TypeUtil.typeStrConvertObject(o, target);
+            if (val instanceof String) val = "'" + val + "'";
+            values.add(val.toString());
+        }
+        return String.join(",", values);
     }
 
 }

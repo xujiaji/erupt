@@ -16,7 +16,7 @@ import java.util.*;
  */
 public class DataHandlerUtil {
 
-    // 引用方式 生成树结构数据
+    // Reference method: Generate tree structure data
     public static List<TreeModel> quoteTree(List<TreeModel> treeModels) {
         Map<String, TreeModel> treeModelMap = new LinkedHashMap<>(treeModels.size());
         treeModels.forEach(treeModel -> treeModelMap.put(treeModel.getId(), treeModel));
@@ -84,7 +84,7 @@ public class DataHandlerUtil {
             case CHOICE:
                 Map<String, String> cm = choiceItems.get(fieldModel.getFieldName());
                 if (null == cm) {
-                    cm = EruptUtil.getChoiceMap(eruptModel, edit.choiceType());
+                    cm = EruptUtil.getChoiceMap(eruptModel, edit);
                     choiceItems.put(fieldModel.getFieldName(), cm);
                 }
                 return cm.get(value.toString());

@@ -33,8 +33,10 @@ public enum EditType {
     @EditTypeMapping(mapping = BoolType.class, desc = "布尔", allowType = {JavaTypeEnum.bool})
     BOOLEAN,
     @EditTypeSearch(vagueMethod = QueryExpression.IN)
-    @EditTypeMapping(mapping = ChoiceType.class, desc = "选择框", allowType = {JavaTypeEnum.String, JavaTypeEnum.number})
+    @EditTypeMapping(mapping = ChoiceType.class, desc = "单选", allowType = {JavaTypeEnum.String, JavaTypeEnum.number})
     CHOICE,
+    @EditTypeMapping(mapping = MultiChoiceType.class, desc = "多选", allowType = {JavaTypeEnum.object}, excelOperator = false)
+    MULTI_CHOICE,
     @EditTypeSearch
     @EditTypeMapping(mapping = TagsType.class, desc = "标签选择器", allowType = {JavaTypeEnum.String, JavaTypeEnum.number})
     TAGS,
@@ -50,7 +52,6 @@ public enum EditType {
     @EditTypeSearch(vagueMethod = QueryExpression.LIKE)
     @EditTypeMapping(mapping = CodeEditorType.class, desc = "代码编辑器", allowType = {JavaTypeEnum.String})
     CODE_EDITOR,
-    @Deprecated
     @EditTypeMapping(desc = "MarkDown编辑器", allowType = {JavaTypeEnum.String})
     MARKDOWN,
     @EditTypeMapping(mapping = AttachmentType.class, desc = "附件上传", allowType = {JavaTypeEnum.String}, excelOperator = false)
@@ -65,6 +66,8 @@ public enum EditType {
     HIDDEN,
     @EditTypeMapping(desc = "空（仍占据组件位置）", allowType = {JavaTypeEnum.not_know}, excelOperator = false)
     EMPTY,
+    @EditTypeMapping(desc = "签名板", allowType = {JavaTypeEnum.String}, excelOperator = false)
+    SIGNATURE,
 
     @Comment("==================================")
     @Comment("以下组件修饰于复杂对象上")
@@ -74,7 +77,7 @@ public enum EditType {
     @EditTypeMapping(mapping = ReferenceTreeType.class, desc = "树引用（多对一)", allowType = {JavaTypeEnum.object})
     REFERENCE_TREE,
     @EditTypeSearch
-    @EditTypeMapping(mapping = ReferenceTableType.class, desc = "表格引用（多对一)", allowType = {JavaTypeEnum.bool})
+    @EditTypeMapping(mapping = ReferenceTableType.class, desc = "表格引用（多对一)", allowType = {JavaTypeEnum.object})
     REFERENCE_TABLE,
     @EditTypeMapping(mapping = CheckboxType.class, desc = "多选（多对多）", allowType = {JavaTypeEnum.object}, excelOperator = false)
     CHECKBOX,

@@ -1,5 +1,6 @@
 package xyz.erupt.mongodb.impl;
 
+import jakarta.annotation.Resource;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.ApplicationArguments;
@@ -10,6 +11,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 import xyz.erupt.annotation.query.Condition;
+import xyz.erupt.annotation.query.Direction;
 import xyz.erupt.core.exception.EruptFieldAnnotationException;
 import xyz.erupt.core.invoke.DataProcessorManager;
 import xyz.erupt.core.query.Column;
@@ -20,7 +22,6 @@ import xyz.erupt.core.view.EruptFieldModel;
 import xyz.erupt.core.view.EruptModel;
 import xyz.erupt.core.view.Page;
 
-import javax.annotation.Resource;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -54,8 +55,14 @@ public class EruptMongodbImpl implements IEruptDataService, ApplicationRunner {
         if (page.getTotal() > 0) {
             query.limit(page.getPageSize());
             query.skip((long) (page.getPageIndex() - 1) * page.getPageSize());
-            if (StringUtils.isNotBlank(page.getSort())) {
-                this.orderByTokenToQuery(eruptModel, query, page.getSort());
+            if (null != page.getSort() && !page.getSort().isEmpty()) {
+                for (xyz.erupt.annotation.query.Sort sort : page.getSort()) {
+                    if (sort.getDirection() == Direction.ASC) {
+                        query.with(Sort.by(Sort.Direction.ASC, sort.getField()));
+                    } else {
+                        query.with(Sort.by(Sort.Direction.DESC, sort.getField()));
+                    }
+                }
             } else if (!"".equals(eruptModel.getErupt().orderBy())) {
                 this.orderByTokenToQuery(eruptModel, query, eruptModel.getErupt().orderBy());
             }

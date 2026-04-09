@@ -2,7 +2,7 @@
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
+    <name>erupt-magic-api</name>
     <artifactId>erupt-magic-api</artifactId>
     <description>
         magic-api support
@@ -11,24 +11,24 @@
 
 
     <parent>
-        <groupId>com.github.xujiaji.erupt</groupId>
+        <groupId>xyz.erupt</groupId>
         <artifactId>erupt</artifactId>
-        <version>1.12.17</version>
+        <version>1.13.3</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
     <properties>
-        <magic-api.version>2.1.1</magic-api.version>
+        <magic-api.version>2.2.2</magic-api.version>
     </properties>
 
     <dependencies>
         <dependency>
-            <groupId>com.github.xujiaji.erupt</groupId>
+            <groupId>xyz.erupt</groupId>
             <artifactId>erupt-upms</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.github.xujiaji.erupt</groupId>
+            <groupId>xyz.erupt</groupId>
             <artifactId>erupt-tpl</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
@@ -40,6 +40,16 @@
             <groupId>org.ssssssss</groupId>
             <artifactId>magic-api-spring-boot-starter</artifactId>
             <version>${magic-api.version}</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>commons-io</artifactId>
+                    <groupId>commons-io</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>commons-compress</artifactId>
+                    <groupId>org.apache.commons</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
     </dependencies>
 

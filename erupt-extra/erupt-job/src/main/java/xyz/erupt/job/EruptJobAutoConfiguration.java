@@ -1,5 +1,6 @@
 package xyz.erupt.job;
 
+import jakarta.annotation.Resource;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
@@ -19,7 +20,6 @@ import xyz.erupt.job.model.EruptMail;
 import xyz.erupt.job.service.EruptJobService;
 import xyz.erupt.jpa.dao.EruptDao;
 
-import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -54,7 +54,11 @@ public class EruptJobAutoConfiguration implements EruptModule {
     public void run() {
         if (eruptJobProp.isEnable()) {
             for (EruptJob job : eruptDao.lambdaQuery(EruptJob.class).eq(EruptJob::getStatus, true).list()) {
-                eruptJobService.modifyJob(job);
+                try {
+                    eruptJobService.modifyJob(job);
+                } catch (Exception e) {
+                    log.warn("The Erupt job named '{}' failed to be added: {}", job.getName(), e.getMessage());
+                }
             }
         } else {
             log.info("Erupt job disable");
@@ -63,7 +67,7 @@ public class EruptJobAutoConfiguration implements EruptModule {
 
     @Override
     public ModuleInfo info() {
-        return ModuleInfo.builder().name("erupt-job").build();
+        return ModuleInfo.builder().name("erupt-job").description("Scheduled Task Management").build();
     }
 
     @Override

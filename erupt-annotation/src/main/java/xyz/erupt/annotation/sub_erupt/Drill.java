@@ -1,5 +1,6 @@
 package xyz.erupt.annotation.sub_erupt;
 
+import org.intellij.lang.annotations.Language;
 import xyz.erupt.annotation.config.Comment;
 import xyz.erupt.annotation.expr.ExprBool;
 
@@ -15,7 +16,11 @@ public @interface Drill {
 
     String title();
 
+    @Comment("是否折叠显示")
+    boolean fold() default false;
+
     @Comment("图标请参考Font Awesome")
+    @Language(value = "html", prefix = "<i class=\"", suffix = "\"></i>")
     String icon() default "fa fa-sitemap";
 
     @Comment("下钻目标配置")

@@ -4,12 +4,13 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>erupt-cloud-server</artifactId>
+    <name>erupt-cloud-server</name>
     <packaging>jar</packaging>
 
     <parent>
-        <groupId>com.github.xujiaji.erupt</groupId>
+        <groupId>xyz.erupt</groupId>
         <artifactId>erupt</artifactId>
-        <version>1.12.17</version>
+        <version>1.13.3</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
@@ -20,29 +21,29 @@
             <optional>true</optional>
         </dependency>
         <dependency>
-            <groupId>com.github.xujiaji.erupt</groupId>
+            <groupId>xyz.erupt</groupId>
             <artifactId>erupt-cloud-common</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.github.xujiaji.erupt</groupId>
+            <groupId>xyz.erupt</groupId>
             <artifactId>erupt-upms</artifactId>
             <version>${project.parent.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>com.github.xujiaji.erupt</groupId>
+            <groupId>xyz.erupt</groupId>
             <artifactId>erupt-security</artifactId>
             <version>${project.parent.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>com.github.xujiaji.erupt</groupId>
+            <groupId>xyz.erupt</groupId>
             <artifactId>erupt-tpl</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.github.xujiaji.erupt</groupId>
+            <groupId>xyz.erupt</groupId>
             <artifactId>erupt-tpl-ui.ant-design</artifactId>
             <version>${project.parent.version}</version>
         </dependency>

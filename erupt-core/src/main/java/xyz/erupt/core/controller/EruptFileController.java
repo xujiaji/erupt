@@ -1,10 +1,13 @@
 package xyz.erupt.core.controller;
 
 import com.google.gson.Gson;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.Cleanup;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.util.StreamUtils;
@@ -27,15 +30,13 @@ import xyz.erupt.core.view.EruptApiModel;
 import xyz.erupt.core.view.EruptModel;
 
 import javax.imageio.ImageIO;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -62,7 +63,10 @@ public class EruptFileController {
     @PostMapping("/upload/{erupt}/{field}")
     @EruptRouter(authIndex = 2, verifyType = EruptRouter.VerifyType.ERUPT)
     public EruptApiModel upload(@PathVariable("erupt") String eruptName, @PathVariable("field") String fieldName, @RequestParam("file") MultipartFile file) {
-        //生成存储路径
+        // Generating storage paths
+        if (null == file.getOriginalFilename()) {
+            return EruptApiModel.errorApi(I18nTranslate.$translate("filename is empty"));
+        }
         EruptModel eruptModel = EruptCoreService.getErupt(eruptName);
         Erupts.powerLegal(eruptModel, powerObject -> powerObject.isEdit() || powerObject.isAdd());
         Edit edit = eruptModel.getEruptFieldMap().get(fieldName).getEruptField().edit();
@@ -70,7 +74,7 @@ public class EruptFileController {
         switch (edit.type()) {
             case ATTACHMENT:
                 AttachmentType attachmentType = edit.attachmentType();
-                //校验扩展名
+                // Validates the extension
                 if (attachmentType.fileTypes().length > 0) {
                     String[] fileNameArr = file.getOriginalFilename().split("\\.");
                     String extensionName = fileNameArr[fileNameArr.length - 1];
@@ -81,14 +85,13 @@ public class EruptFileController {
                 if (!"".equals(attachmentType.path())) {
                     path = attachmentType.path() + path;
                 }
-                //校验文件大小
+                // Verify the file size
                 if (attachmentType.size() > 0 && file.getSize() / 1024 > attachmentType.size()) {
                     return EruptApiModel.errorApi(I18nTranslate.$translate("erupt.upload_error.size") + ": " + attachmentType.size() + "KB");
                 }
                 switch (edit.attachmentType().type()) {
                     case IMAGE:
                         AttachmentType.ImageType imageType = edit.attachmentType().imageType();
-                        // 通过MultipartFile得到InputStream，从而得到BufferedImage
                         BufferedImage bufferedImage = ImageIO.read(file.getInputStream());
                         if (bufferedImage == null) {
                             return EruptApiModel.errorApi(I18nTranslate.$translate("erupt.upload_error.not_image"));
@@ -124,9 +127,9 @@ public class EruptFileController {
         List<String> paths = new ArrayList<>();
         for (MultipartFile file : files) {
             EruptApiModel eruptApiModel = upload(eruptName, fieldName, file);
-            paths.add(eruptApiModel.getMessage());
+            paths.add(eruptApiModel.getData().toString());
         }
-        return EruptApiModel.successApi(String.join(",", paths));
+        return EruptApiModel.successApi(paths);
     }
 
 
@@ -165,7 +168,7 @@ public class EruptFileController {
                                    HttpServletResponse response) throws IOException, ClassNotFoundException {
         if (null == file) {
             @Cleanup InputStream stream = EruptFileController.class.getClassLoader().getResourceAsStream("ueditor.json");
-            String json = StreamUtils.copyToString(stream, Charset.forName(StandardCharsets.UTF_8.name()));
+            String json = StreamUtils.copyToString(stream, StandardCharsets.UTF_8);
             if (null == callback) {
                 response.getOutputStream().write(json.getBytes(StandardCharsets.UTF_8));
             } else {
@@ -189,14 +192,21 @@ public class EruptFileController {
         if (!path.startsWith(FS_SEP)) {
             path = FS_SEP + path;
         }
-        File file = new File(eruptProp.getUploadPath() + path);
-        if (!file.exists()) {
-            response.setStatus(HttpStatus.NOT_FOUND.value());
+        Path uploadRoot = Paths.get(eruptProp.getUploadPath());
+        Path target = uploadRoot.resolve(path.substring(1)).normalize();
+        if (!target.startsWith(uploadRoot)) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Illegal path");
+            return;
+        }
+        if (!Files.isRegularFile(target) || !Files.exists(target)) {
             response.sendError(HttpStatus.NOT_FOUND.value());
             return;
         }
-        @Cleanup InputStream inputStream = new FileInputStream(file);
-        response.getOutputStream().write(StreamUtils.copyToByteArray(inputStream));
+        response.setContentType(MediaType.APPLICATION_OCTET_STREAM_VALUE);
+        response.setHeader(HttpHeaders.CONTENT_DISPOSITION,
+                "attachment; filename=\"" + target.getFileName() + "\"");
+        Files.copy(target, response.getOutputStream());
+        response.flushBuffer();
     }
 
 }

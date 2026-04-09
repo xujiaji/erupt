@@ -18,54 +18,49 @@ import java.util.stream.Collectors;
 @Setter
 public class Server {
 
-    /**
-     * CPU相关信息
-     */
     private Cpu cpu;
 
-    /**
-     * 內存相关信息
-     */
     private Mem mem;
 
-    /**
-     * JVM相关信息
-     */
     private Jvm jvm;
 
-    /**
-     * 服务器相关信息
-     */
     private Sys sys;
 
+    private List<Gpu> gpus;
+
     /**
-     * 磁盘相关信息
+     * Disk
      */
     private List<SysFile> sysFiles;
 
-    private Date startupDate; //启动时间
+    private Date startupDate; // starting time
 
-    private String runDay; //运行时长
+    private String runDay; // Running duration
 
-    public Server() {
+    public Server(Boolean waitCpu) {
         SystemInfo si = new SystemInfo();
         OperatingSystem os = si.getOperatingSystem();
-        this.setCpu(new Cpu(si));
+        this.setCpu(new Cpu(si, waitCpu));
         this.setMem(new Mem(si));
         this.setJvm(new Jvm());
         this.setSys(new Sys());
+        this.setGpus(si.getHardware().getGraphicsCards().stream().map(Gpu::new).collect(Collectors.toList()));
+        this.setSysFiles(os.getFileSystem().getFileStores().stream().map(SysFile::new).collect(Collectors.toList()));
         long startupDate = EruptSpringUtil.getApplicationContext().getStartupDate();
         this.setStartupDate(new Date(startupDate));
         this.setRunDay(this.zhDateDiff(this.getStartupDate()));
-        sysFiles = os.getFileSystem().getFileStores().stream().map(SysFile::new).collect(Collectors.toList());
     }
 
     private String zhDateDiff(Date date) {
         long l = System.currentTimeMillis() - date.getTime();
-        long day = l / (24 * 60 * 60 * 1000);
-        long hour = (l / (60 * 60 * 1000) - day * 24);
-        long min = ((l / (60 * 1000)) - day * 24 * 60 - hour * 60);
-        return day + "天" + hour + "小时" + min + "分";
+        long days = l / (24 * 60 * 60 * 1000);
+        long hours = (l / (60 * 60 * 1000) - days * 24);
+        long mins = ((l / (60 * 1000)) - days * 24 * 60 - hours * 60);
+        return String.format("%s%s%s",
+                days > 0 ? days + " days " : "",
+                hours > 0 ? hours + " hours " : "",
+                mins + " minutes"
+        ).trim();
     }
 
 }

@@ -1,9 +1,13 @@
 package xyz.erupt.security.interceptor;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.AsyncHandlerInterceptor;
+import xyz.erupt.core.context.MetaContext;
+import xyz.erupt.core.context.MetaUser;
+import xyz.erupt.core.module.MetaUserinfo;
 import xyz.erupt.upms.annotation.EruptLoginAuth;
 import xyz.erupt.upms.annotation.EruptMenuAuth;
 import xyz.erupt.upms.constant.EruptReqHeaderConst;
@@ -11,9 +15,9 @@ import xyz.erupt.upms.constant.SessionKey;
 import xyz.erupt.upms.service.EruptSessionService;
 import xyz.erupt.upms.service.EruptUserService;
 
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 /**
@@ -31,18 +35,24 @@ public class EruptSuperInterceptor implements AsyncHandlerInterceptor {
 
 
     @Override
-    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws IOException {
+    public boolean preHandle(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response,@NonNull Object handler) throws IOException {
         if (handler instanceof HandlerMethod) {
             HandlerMethod handlerMethod = (HandlerMethod) handler;
             EruptLoginAuth eruptAuth = handlerMethod.getMethodAnnotation(EruptLoginAuth.class);
             EruptMenuAuth eruptMenuAuth = handlerMethod.getMethodAnnotation(EruptMenuAuth.class);
             if (null != eruptAuth || null != eruptMenuAuth) {
                 String token = request.getHeader(EruptReqHeaderConst.ERUPT_HEADER_TOKEN);
+                if (null == token) {
+                    token = request.getParameter(EruptReqHeaderConst.URL_ERUPT_PARAM_TOKEN);
+                }
                 if (null == token || null == sessionService.get(SessionKey.TOKEN_OLINE + token)) {
                     response.setStatus(HttpStatus.UNAUTHORIZED.value());
                     response.sendError(HttpStatus.UNAUTHORIZED.value());
                     return false;
                 }
+                MetaUserinfo metaUserinfo = eruptUserService.getSimpleUserInfo();
+                MetaContext.registerToken(token);
+                MetaContext.register(new MetaUser(metaUserinfo.getId(), metaUserinfo.getAccount(), metaUserinfo.getUsername()));
             }
             if (null != eruptMenuAuth) {
                 if (null == eruptUserService.getEruptMenuByValue(eruptMenuAuth.value())) {

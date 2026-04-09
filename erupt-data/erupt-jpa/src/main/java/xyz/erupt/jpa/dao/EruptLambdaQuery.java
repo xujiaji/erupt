@@ -1,17 +1,20 @@
 package xyz.erupt.jpa.dao;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.Query;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.springframework.transaction.annotation.Transactional;
+import xyz.erupt.core.util.ReflectUtil;
+import xyz.erupt.core.view.SimplePage;
 import xyz.erupt.jpa.constant.SqlLang;
 import xyz.erupt.linq.lambda.LambdaInfo;
 import xyz.erupt.linq.lambda.LambdaSee;
 import xyz.erupt.linq.lambda.SFunction;
 
-import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
-import javax.persistence.Query;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -33,168 +36,225 @@ public class EruptLambdaQuery<T> {
         this.eruptClass = eruptClass;
     }
 
-    public <R> EruptLambdaQuery<T> isNull(SFunction<T, R> field) {
-        querySchema.getWheres().add(LambdaSee.field(field) + " is null");
+    public <E, R> EruptLambdaQuery<T> with(SFunction<E, R> field) {
+        querySchema.getWith().add(LambdaSee.field(field));
         return this;
     }
 
-    public <R> EruptLambdaQuery<T> isNull(boolean condition, SFunction<T, R> field) {
+    public EruptLambdaQuery<T> with() {
+        querySchema.getWith().clear();
+        return this;
+    }
+
+    public SimplePage<T> page(int limit, int offset) {
+        SimplePage<T> simplePage = new SimplePage<>();
+
+        simplePage.setTotal(this.count());
+        if (simplePage.getTotal() > 0) {
+            simplePage.setList(this.limit(limit).offset(offset).list());
+        } else {
+            simplePage.setList(new ArrayList<>());
+        }
+        return simplePage;
+    }
+
+    public <E, R> EruptLambdaQuery<T> isNull(SFunction<E, R> field) {
+        querySchema.getWheres().add(geneField(field) + " is null");
+        return this;
+    }
+
+    public <E, R> EruptLambdaQuery<T> isNull(boolean condition, SFunction<E, R> field) {
         if (condition) return this.isNull(field);
         return this;
     }
 
-    public <R> EruptLambdaQuery<T> isNotNull(SFunction<T, R> field) {
-        querySchema.getWheres().add(LambdaSee.field(field) + " is not null");
+    public <E, R> EruptLambdaQuery<T> isNotNull(SFunction<E, R> field) {
+        querySchema.getWheres().add(geneField(field) + " is not null");
         return this;
     }
 
-    public <R> EruptLambdaQuery<T> isNotNull(boolean condition, SFunction<T, R> field) {
+    public <E, R> EruptLambdaQuery<T> isNotNull(boolean condition, SFunction<E, R> field) {
         if (condition) return this.isNotNull(field);
         return this;
     }
 
-    public <R> EruptLambdaQuery<T> eq(SFunction<T, R> field, Object val) {
+    public <E, R> EruptLambdaQuery<T> eq(SFunction<E, R> field, Object val) {
         String placeholder = this.genePlaceholder();
         querySchema.getWheres().add(geneField(field) + " = :" + placeholder);
         querySchema.getParams().put(placeholder, val);
         return this;
     }
 
-    public <R> EruptLambdaQuery<T> eq(boolean condition, SFunction<T, R> field, Object val) {
+    public <E, R> EruptLambdaQuery<T> eq(boolean condition, SFunction<E, R> field, Object val) {
         if (condition) return this.eq(field, val);
         return this;
     }
 
-    public <R> EruptLambdaQuery<T> ne(SFunction<T, R> field, Object val) {
+    public <E, R> EruptLambdaQuery<T> ne(SFunction<E, R> field, Object val) {
         String placeholder = this.genePlaceholder();
-        querySchema.getWheres().add(LambdaSee.field(field) + " <> :" + placeholder);
+        querySchema.getWheres().add(geneField(field) + " <> :" + placeholder);
         querySchema.getParams().put(placeholder, val);
         return this;
     }
 
-    public <R> EruptLambdaQuery<T> ne(boolean condition, SFunction<T, R> field, Object val) {
+    public <E, R> EruptLambdaQuery<T> ne(boolean condition, SFunction<E, R> field, Object val) {
         if (condition) return this.ne(field, val);
         return this;
     }
 
-    public <R> EruptLambdaQuery<T> gt(SFunction<T, R> field, Object val) {
+    public <E, R> EruptLambdaQuery<T> gt(SFunction<E, R> field, Object val) {
         String placeholder = this.genePlaceholder();
         querySchema.getWheres().add(geneField(field) + " > :" + placeholder);
         querySchema.getParams().put(placeholder, val);
         return this;
     }
 
-    public <R> EruptLambdaQuery<T> gt(boolean condition, SFunction<T, R> field, Object val) {
+    public <E, R> EruptLambdaQuery<T> gt(boolean condition, SFunction<E, R> field, Object val) {
         if (condition) return this.gt(field, val);
         return this;
     }
 
-    public <R> EruptLambdaQuery<T> lt(SFunction<T, R> field, Object val) {
+    public <E, R> EruptLambdaQuery<T> lt(SFunction<E, R> field, Object val) {
         String placeholder = this.genePlaceholder();
         querySchema.getWheres().add(geneField(field) + " < :" + placeholder);
         querySchema.getParams().put(placeholder, val);
         return this;
     }
 
-    public <R> EruptLambdaQuery<T> lt(boolean condition, SFunction<T, R> field, Object val) {
+    public <E, R> EruptLambdaQuery<T> lt(boolean condition, SFunction<E, R> field, Object val) {
         if (condition) return this.lt(field, val);
         return this;
     }
 
-    public <R> EruptLambdaQuery<T> ge(SFunction<T, R> field, Object val) {
+    public <E, R> EruptLambdaQuery<T> ge(SFunction<E, R> field, Object val) {
         String placeholder = this.genePlaceholder();
         querySchema.getWheres().add(geneField(field) + " >= :" + placeholder);
         querySchema.getParams().put(placeholder, val);
         return this;
     }
 
-    public <R> EruptLambdaQuery<T> ge(boolean condition, SFunction<T, R> field, Object val) {
+    public <E, R> EruptLambdaQuery<T> ge(boolean condition, SFunction<E, R> field, Object val) {
         if (condition) return this.ge(field, val);
         return this;
     }
 
-    public <R> EruptLambdaQuery<T> le(SFunction<T, R> field, Object val) {
+    public <E, R> EruptLambdaQuery<T> le(SFunction<E, R> field, Object val) {
         String placeholder = this.genePlaceholder();
         querySchema.getWheres().add(geneField(field) + " <= :" + placeholder);
         querySchema.getParams().put(placeholder, val);
         return this;
     }
 
-    public <R> EruptLambdaQuery<T> le(boolean condition, SFunction<T, R> field, Object val) {
+    public <E, R> EruptLambdaQuery<T> le(boolean condition, SFunction<E, R> field, Object val) {
         if (condition) return this.le(field, val);
         return this;
     }
 
-    public <R> EruptLambdaQuery<T> between(SFunction<T, R> field, Object val1, Object val2) {
+    public <E, R> EruptLambdaQuery<T> between(SFunction<E, R> field, Object val1, Object val2) {
         String l = this.genePlaceholder();
         String r = this.genePlaceholder();
-        querySchema.getWheres().add(LambdaSee.field(field) + " between :" + l + " and " + ":" + r);
+        querySchema.getWheres().add(geneField(field) + " between :" + l + " and " + ":" + r);
         querySchema.getParams().put(l, val1);
         querySchema.getParams().put(r, val2);
         return this;
     }
 
-    public <R> EruptLambdaQuery<T> between(boolean condition, SFunction<T, R> field, Object val1, Object val2) {
+    public <E, R> EruptLambdaQuery<T> between(boolean condition, SFunction<E, R> field, Object val1, Object val2) {
         if (condition) return this.between(field, val1, val2);
         return this;
     }
 
-    public <R> EruptLambdaQuery<T> in(SFunction<T, R> field, Collection<?> val) {
+    public <E, R> EruptLambdaQuery<T> notBetween(SFunction<E, R> field, Object val1, Object val2) {
+        String l = this.genePlaceholder();
+        String r = this.genePlaceholder();
+        querySchema.getWheres().add(geneField(field) + " not between :" + l + " and " + ":" + r);
+        querySchema.getParams().put(l, val1);
+        querySchema.getParams().put(r, val2);
+        return this;
+    }
+
+    public <E, R> EruptLambdaQuery<T> notBetween(boolean condition, SFunction<E, R> field, Object val1, Object val2) {
+        if (condition) return this.notBetween(field, val1, val2);
+        return this;
+    }
+
+    public <E, R> EruptLambdaQuery<T> in(SFunction<E, R> field, Collection<?> val) {
         String placeholder = this.genePlaceholder();
-        querySchema.getWheres().add(LambdaSee.field(field) + " in (:" + placeholder + ")");
+        querySchema.getWheres().add(geneField(field) + " in (:" + placeholder + ")");
         querySchema.getParams().put(placeholder, new ArrayList<>(val));
         return this;
     }
 
-    public <R> EruptLambdaQuery<T> in(boolean condition, SFunction<T, R> field, Collection<?> val) {
+    public <E, R> EruptLambdaQuery<T> in(boolean condition, SFunction<E, R> field, Collection<?> val) {
         if (condition) return this.in(field, val);
         return this;
     }
 
-    public <R> EruptLambdaQuery<T> in(SFunction<T, R> field, Object... val) {
+    public <E, R> EruptLambdaQuery<T> in(SFunction<E, R> field, Object... val) {
         return this.in(field, Arrays.stream(val).collect(Collectors.toList()));
     }
 
-    public <R> EruptLambdaQuery<T> in(boolean condition, SFunction<T, R> field, Object... val) {
+    public <E, R> EruptLambdaQuery<T> in(boolean condition, SFunction<E, R> field, Object... val) {
         if (condition) return this.in(field, val);
         return this;
     }
 
-    public <R> EruptLambdaQuery<T> like(SFunction<T, R> field, Object val) {
+    public <E, R> EruptLambdaQuery<T> notIn(SFunction<E, R> field, Collection<?> val) {
+        String placeholder = this.genePlaceholder();
+        querySchema.getWheres().add(geneField(field) + " not in (:" + placeholder + ")");
+        querySchema.getParams().put(placeholder, new ArrayList<>(val));
+        return this;
+    }
+
+    public <E, R> EruptLambdaQuery<T> notIn(boolean condition, SFunction<E, R> field, Collection<?> val) {
+        if (condition) return this.notIn(field, val);
+        return this;
+    }
+
+    public <E, R> EruptLambdaQuery<T> notIn(SFunction<E, R> field, Object... val) {
+        return this.notIn(field, Arrays.stream(val).collect(Collectors.toList()));
+    }
+
+    public <E, R> EruptLambdaQuery<T> notIn(boolean condition, SFunction<E, R> field, Object... val) {
+        if (condition) return this.notIn(field, val);
+        return this;
+    }
+
+    public <E, R> EruptLambdaQuery<T> like(SFunction<E, R> field, Object val) {
         String placeholder = this.genePlaceholder();
         querySchema.getWheres().add(geneField(field) + " like :" + placeholder);
         querySchema.getParams().put(placeholder, "%" + val + "%");
         return this;
     }
 
-    public <R> EruptLambdaQuery<T> like(boolean condition, SFunction<T, R> field, Object val) {
+    public <E, R> EruptLambdaQuery<T> like(boolean condition, SFunction<E, R> field, Object val) {
         if (condition) return this.like(field, val);
         return this;
     }
 
-    public <R> EruptLambdaQuery<T> likeValue(SFunction<T, R> field, Object val) {
+    public <E, R> EruptLambdaQuery<T> likeValue(SFunction<E, R> field, Object val) {
         String placeholder = this.genePlaceholder();
         querySchema.getWheres().add(geneField(field) + " like :" + placeholder);
         querySchema.getParams().put(placeholder, val);
         return this;
     }
 
-    public <R> EruptLambdaQuery<T> likeValue(boolean condition, SFunction<T, R> field, Object val) {
+    public <E, R> EruptLambdaQuery<T> likeValue(boolean condition, SFunction<E, R> field, Object val) {
         if (condition) return this.likeValue(field, val);
         return this;
     }
 
-    //添加条件
+    // Add custom conditions
     public EruptLambdaQuery<T> addCondition(String condition) {
         querySchema.getWheres().add(condition);
         return this;
     }
 
     /**
-     * 添加自定义条件
+     * Add custom conditions
      *
-     * @param condition :xxx 的占位符可以被 params参数运行时替换，防止 SQL 注入
-     * @param params    条件参数
+     * @param condition The placeholder of xxx can be replaced by the params parameter at runtime to prevent SQL injection.
+     * @param params    Placeholder parameter
      */
     public EruptLambdaQuery<T> addCondition(String condition, Map<String, Object> params) {
         querySchema.getWheres().add(condition);
@@ -207,27 +267,27 @@ public class EruptLambdaQuery<T> {
         return this;
     }
 
-    public EruptLambdaQuery<T> orderBy(SFunction<T, ?> field) {
-        querySchema.getOrders().add(LambdaSee.field(field) + " asc");
+    public <E> EruptLambdaQuery<T> orderBy(SFunction<E, ?> field) {
+        querySchema.getOrders().add(geneField(field) + " asc");
         return this;
     }
 
-    public EruptLambdaQuery<T> orderBy(boolean condition, SFunction<T, ?> field) {
+    public <E> EruptLambdaQuery<T> orderBy(boolean condition, SFunction<E, ?> field) {
         if (condition) return this.orderBy(field);
         return this;
     }
 
-    public EruptLambdaQuery<T> orderByAsc(SFunction<T, ?> field) {
+    public <E> EruptLambdaQuery<T> orderByAsc(SFunction<E, ?> field) {
         return orderBy(field);
     }
 
-    public EruptLambdaQuery<T> orderByAsc(boolean condition, SFunction<T, ?> field) {
+    public <E> EruptLambdaQuery<T> orderByAsc(boolean condition, SFunction<E, ?> field) {
         return orderBy(condition, field);
     }
 
 
-    public EruptLambdaQuery<T> orderByDesc(SFunction<T, ?> field) {
-        querySchema.getOrders().add(LambdaSee.field(field) + " desc");
+    public <E> EruptLambdaQuery<T> orderByDesc(SFunction<E, ?> field) {
+        querySchema.getOrders().add(geneField(field) + " desc");
         return this;
     }
 
@@ -243,6 +303,11 @@ public class EruptLambdaQuery<T> {
 
     public EruptLambdaQuery<T> offset(Integer offset) {
         querySchema.setOffset(offset);
+        return this;
+    }
+
+    public EruptLambdaQuery<T> distinct() {
+        querySchema.setDistinct(true);
         return this;
     }
 
@@ -290,6 +355,11 @@ public class EruptLambdaQuery<T> {
         }
     }
 
+    public final <R> List<R> selectByPath(Class<R> requiredType, String... fields) {
+        this.querySchema.columns.addAll(Arrays.asList(fields));
+        return this.geneQuery().getResultList();
+    }
+
     @Deprecated
     @SafeVarargs
     public final List<Object[]> listSelects(SFunction<T, ?>... fields) {
@@ -310,9 +380,9 @@ public class EruptLambdaQuery<T> {
 
     @SneakyThrows
     private <R> R objectToClazz(Class<R> clazz, Object[] objects, SFunction<?, ?>... fields) {
-        R r = clazz.newInstance();
+        R r = clazz.getDeclaredConstructor().newInstance();
         for (int i = 0; i < fields.length; i++) {
-            Field f = clazz.getDeclaredField(LambdaSee.field(fields[i]));
+            Field f = ReflectUtil.findClassField(clazz, LambdaSee.field(fields[i]));
             f.setAccessible(true);
             f.set(r, objects[i]);
         }
@@ -320,46 +390,95 @@ public class EruptLambdaQuery<T> {
     }
 
     public Long count() {
-        this.querySchema.columns.add("count(*)");
-        return (Long) geneQuery().getSingleResult();
+        try {
+            this.querySchema.columns.add("count(*)");
+            return (Long) geneQuery(false).getSingleResult();
+        } finally {
+            this.querySchema.columns.clear();
+        }
     }
 
-    public Long count(SFunction<T, ?> field) {
-        this.querySchema.columns.add("count(" + LambdaSee.field(field) + ")");
-        return (Long) geneQuery().getSingleResult();
+    public <E> Long count(SFunction<E, ?> field) {
+        try {
+            this.querySchema.columns.add("count(" + geneField(field) + ")");
+            return (Long) geneQuery(false).getSingleResult();
+        } finally {
+            this.querySchema.columns.clear();
+        }
     }
 
-    public Object sum(SFunction<T, ?> field) {
-        this.querySchema.columns.add("sum(" + LambdaSee.field(field) + ")");
-        return geneQuery().getSingleResult();
+    public <E> Object sum(SFunction<E, ?> field) {
+        try {
+            this.querySchema.columns.add("sum(" + geneField(field) + ")");
+            return geneQuery(false).getSingleResult();
+        } finally {
+            this.querySchema.columns.clear();
+        }
     }
 
-    public Double avg(SFunction<T, ?> field) {
-        this.querySchema.columns.add("avg(" + LambdaSee.field(field) + ")");
-        return (Double) geneQuery().getSingleResult();
+    public <E> Double avg(SFunction<E, ?> field) {
+        try {
+            this.querySchema.columns.add("avg(" + geneField(field) + ")");
+            return (Double) geneQuery(false).getSingleResult();
+        } finally {
+            this.querySchema.columns.clear();
+        }
     }
 
-    public Object min(SFunction<T, ?> field) {
-        this.querySchema.columns.add("min(" + LambdaSee.field(field) + ")");
-        return geneQuery().getSingleResult();
+    public <E> Object min(SFunction<E, ?> field) {
+        try {
+            this.querySchema.columns.add("min(" + geneField(field) + ")");
+            return geneQuery(false).getSingleResult();
+        } finally {
+            this.querySchema.columns.clear();
+        }
     }
 
-    public Object max(SFunction<T, ?> field) {
-        this.querySchema.columns.add("max(" + LambdaSee.field(field) + ")");
-        return geneQuery().getSingleResult();
+    public <E> Object max(SFunction<E, ?> field) {
+        try {
+            this.querySchema.columns.add("max(" + geneField(field) + ")");
+            return geneQuery(false).getSingleResult();
+        } finally {
+            this.querySchema.columns.clear();
+        }
+    }
+
+    public int delete() {
+        List<T> entities = this.list();
+        for (T entity : entities) {
+            entityManager.remove(entity);
+        }
+        return entities.size();
+    }
+
+    @Transactional
+    public int deleteAndFlush() {
+        int result = this.delete();
+        entityManager.flush();
+        return result;
     }
 
     private Query geneQuery() {
+        return this.geneQuery(true);
+    }
+
+    /**
+     * @param useOrderBy count/sum/avg/min/max don't need order
+     */
+    private Query geneQuery(boolean useOrderBy) {
         StringBuilder select = new StringBuilder();
         if (!querySchema.columns.isEmpty()) {
             select.append(SqlLang.SELECT);
+            if (querySchema.distinct) {
+                select.append(SqlLang.DISTINCT);
+            }
             querySchema.getColumns().forEach(it -> select.append(it).append(SqlLang.COMMA));
             select.deleteCharAt(select.length() - 1);
         }
         StringBuilder expr = new StringBuilder(select + SqlLang.FROM + eruptClass.getSimpleName() + SqlLang.AS + eruptClass.getSimpleName());
         if (!querySchema.getWheres().isEmpty())
             expr.append(SqlLang.WHERE).append(String.join(SqlLang.AND, querySchema.getWheres()));
-        if (!querySchema.getOrders().isEmpty())
+        if (useOrderBy && !querySchema.getOrders().isEmpty())
             expr.append(SqlLang.ORDER_BY).append(String.join(SqlLang.COMMA, querySchema.getOrders()));
         Query query = entityManager.createQuery(expr.toString());
         querySchema.getParams().forEach(query::setParameter);
@@ -369,17 +488,26 @@ public class EruptLambdaQuery<T> {
     }
 
     private String genePlaceholder() {
-        return RandomStringUtils.randomAlphabetic(4);
+        return RandomStringUtils.randomAlphabetic(8);
     }
 
     private String geneField(SFunction<?, ?> field) {
         LambdaInfo lambdaInfo = LambdaSee.info(field);
-        return lambdaInfo.getClazz().getSimpleName() + "." + lambdaInfo.getField();
+        if (querySchema.with.isEmpty()) {
+            return lambdaInfo.getClazz().getSimpleName() + SqlLang.DOT + lambdaInfo.getField();
+        } else {
+            StringBuilder withs = new StringBuilder();
+            querySchema.with.forEach(it -> withs.append(it).append(SqlLang.DOT));
+            return withs + lambdaInfo.getField();
+        }
     }
+
 
     @Getter
     @Setter
     public static class QuerySchema {
+
+        private List<String> with = new ArrayList<>();
 
         private List<String> columns = new ArrayList<>();
 
@@ -392,6 +520,8 @@ public class EruptLambdaQuery<T> {
         private Integer limit;
 
         private Integer offset;
+
+        private boolean distinct = false;
 
     }
 

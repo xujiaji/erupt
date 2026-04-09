@@ -2,12 +2,15 @@ package xyz.erupt.upms.model.log;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.Type;
 import xyz.erupt.annotation.Erupt;
 import xyz.erupt.annotation.EruptField;
 import xyz.erupt.annotation.EruptI18n;
+import xyz.erupt.annotation.constant.AnnotationConst;
 import xyz.erupt.annotation.fun.DataProxy;
 import xyz.erupt.annotation.sub_erupt.Power;
 import xyz.erupt.annotation.sub_field.Edit;
@@ -20,10 +23,6 @@ import xyz.erupt.annotation.sub_field.sub_edit.Search;
 import xyz.erupt.jpa.model.BaseModel;
 import xyz.erupt.linq.lambda.LambdaSee;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Lob;
-import javax.persistence.Table;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
@@ -60,7 +59,7 @@ public class EruptOperateLog extends BaseModel implements DataProxy<EruptOperate
     private String ip;
 
     @EruptField(
-            views = @View(title = "IP来源", desc = "格式：国家 | 大区 | 省份 | 城市 | 运营商", template = "value&&value.replace(/\\|/g,' | ')"),
+            views = @View(title = "IP来源", desc = "国家 | 大区 | 省份 | 城市 | 运营商", template = "value&&value.replace(/\\|/g,' | ')"),
             edit = @Edit(title = "IP来源", search = @Search(vague = true))
     )
     private String region;
@@ -71,8 +70,7 @@ public class EruptOperateLog extends BaseModel implements DataProxy<EruptOperate
     )
     private String apiName;
 
-    @Lob
-    @Type(type = "org.hibernate.type.TextType")
+    @Column(length = AnnotationConst.CONFIG_LENGTH)
     @EruptField(
             views = @View(title = "请求参数", type = ViewType.CODE),
             edit = @Edit(title = "请求参数", type = EditType.CODE_EDITOR, codeEditType = @CodeEditorType(language = "json"))
@@ -103,7 +101,7 @@ public class EruptOperateLog extends BaseModel implements DataProxy<EruptOperate
     )
     private Date createTime;
 
-    @Column(length = 4000)
+    @Column(length = AnnotationConst.REMARK_LENGTH)
     @EruptField(
             views = @View(title = "请求地址", type = ViewType.HTML)
     )
