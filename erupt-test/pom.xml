@@ -3,16 +3,43 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>erupt-test</artifactId>
-    <name>erupt-test</name>
-    <description>unittest</description>
-
     <parent>
         <groupId>com.github.xujiaji.erupt</groupId>
         <artifactId>erupt</artifactId>
         <version>1.13.3</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
+
+    <artifactId>erupt-test</artifactId>
+    <name>erupt-test</name>
+    <description>unittest</description>
+    <url>https://www.erupt.xyz</url>
+
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>xujiaji</name>
+            <email>jiajixu@qq.com</email>
+            <roles>
+                <role>owner</role>
+            </roles>
+            <timezone>+8</timezone>
+        </developer>
+    </developers>
+
+    <scm>
+        <tag>master</tag>
+        <url>https://github.com/erupts/erupt</url>
+        <connection>scm:git:https://github.com/erupts/erupt.git</connection>
+        <developerConnection>scm:git:https://github.com/erupts/erupt.git</developerConnection>
+    </scm>
 
     <dependencies>
         <dependency>
@@ -23,14 +50,17 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
+            <version>${spring.boot.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-jdbc</artifactId>
+            <version>${spring.boot.version}</version>
         </dependency>
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
+            <version>2.3.232</version>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>

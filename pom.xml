@@ -177,9 +177,9 @@
     </licenses>
     <scm>
         <tag>master</tag>
-        <url>git@github.com:erupts/erupt.git</url>
-        <connection>scm:git:git@github.com:erupts/erupt.git</connection>
-        <developerConnection>scm:git:git@github.com:erupts/erupt.git</developerConnection>
+        <url>https://github.com/erupts/erupt</url>
+        <connection>scm:git:https://github.com/erupts/erupt.git</connection>
+        <developerConnection>scm:git:https://github.com/erupts/erupt.git</developerConnection>
     </scm>
     <developers>
         <developer>
@@ -217,7 +217,7 @@
                     <plugin>
                         <groupId>org.sonatype.central</groupId>
                         <artifactId>central-publishing-maven-plugin</artifactId>
-                        <version>0.8.0</version>
+                        <version>0.10.0</version>
                         <extensions>true</extensions>
                         <configuration>
                             <publishingServerId>central</publishingServerId>
