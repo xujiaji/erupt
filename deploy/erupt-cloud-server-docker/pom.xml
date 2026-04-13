@@ -41,17 +41,17 @@
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
-            <groupId>xyz.erupt</groupId>
+            <groupId>com.github.xujiaji.erupt</groupId>
             <artifactId>erupt-notice</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
-            <groupId>xyz.erupt</groupId>
+            <groupId>com.github.xujiaji.erupt</groupId>
             <artifactId>erupt-ai</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
-            <groupId>xyz.erupt</groupId>
+            <groupId>com.github.xujiaji.erupt</groupId>
             <artifactId>erupt-ai-claw</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
