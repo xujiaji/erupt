@@ -6,6 +6,7 @@
 
     <artifactId>erupt-print</artifactId>
     <name>erupt-print</name>
+
     <dependencies>
         <dependency>
             <groupId>com.github.xujiaji.erupt</groupId>

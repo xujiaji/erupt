@@ -46,14 +46,14 @@ public class LookerPostLevel extends BaseModel {
                     @View(title = "所属组", column = "eruptOrg.name"),
                     @View(title = "岗位", column = "eruptPost.name"),
             },
-            edit = @Edit(title = "创建人", readonly = @Readonly(allowChange = false), type = EditType.REFERENCE_TABLE)
+            edit = @Edit(title = "Creator", readonly = @Readonly(allowChange = false), type = EditType.REFERENCE_TABLE)
     )
     @EruptSmartSkipSerialize
     private EruptUserPostVo createUser;
 
     @EruptField(
-            views = @View(title = "创建时间", sortable = true),
-            edit = @Edit(title = "创建时间", readonly = @Readonly(allowChange = false), dateType = @DateType(type = DateType.Type.DATE_TIME))
+            views = @View(title = "Create Time", sortable = true),
+            edit = @Edit(title = "Create Time", readonly = @Readonly(allowChange = false), dateType = @DateType(type = DateType.Type.DATE_TIME))
     )
     @EruptSmartSkipSerialize
     private Date createTime;

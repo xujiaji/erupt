@@ -22,7 +22,7 @@ import xyz.erupt.jpa.model.BaseModel;
 @Entity
 @Table(name = "e_upms_user")
 @Erupt(
-        name = "用户管理"
+        name = "User Management"
 )
 @EruptI18n
 @Getter
@@ -30,8 +30,8 @@ import xyz.erupt.jpa.model.BaseModel;
 public class EruptUserPostVo extends BaseModel {
 
     @EruptField(
-            views = @View(title = "姓名", sortable = true),
-            edit = @Edit(title = "姓名", notNull = true, search = @Search(vague = true))
+            views = @View(title = "name", sortable = true),
+            edit = @Edit(title = "name", notNull = true, search = @Search(vague = true))
     )
     private String name;
 
@@ -44,8 +44,8 @@ public class EruptUserPostVo extends BaseModel {
 
     @ManyToOne
     @EruptField(
-            views = @View(title = "岗位", column = "name"),
-            edit = @Edit(title = "岗位", type = EditType.REFERENCE_TREE)
+            views = @View(title = "Post", column = "name"),
+            edit = @Edit(title = "Post", type = EditType.REFERENCE_TREE)
     )
     private EruptPost eruptPost;
 

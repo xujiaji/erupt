@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
 @Entity
 @Table(name = "e_upms_org")
 @Erupt(
-        name = "组织管理",
+        name = "Org Management",
         tree = @Tree(pid = "parentOrg.id", expandLevel = 5),
         dataProxy = EruptOrg.Comp.class,
         orderBy = "EruptOrg.sort asc"
@@ -75,7 +75,7 @@ public class EruptOrg extends BaseModel {
 
     @EruptField(
             edit = @Edit(
-                    title = "显示顺序"
+                    title = "Display Order"
             )
     )
     private Integer sort;
