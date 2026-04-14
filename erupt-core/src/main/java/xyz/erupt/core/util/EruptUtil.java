@@ -127,6 +127,48 @@ public class EruptUtil {
                             map.put(field.getName(), idSet);
                         }
                         break;
+                    case MULTI_CHOICE:
+                        if (value instanceof Collection<?> multiChoiceCollection && !multiChoiceCollection.isEmpty()) {
+                            Set<String> valueSet = new LinkedHashSet<>();
+                            Field primaryField = null;
+                            Object first = multiChoiceCollection.iterator().next();
+                            if (null != first && !(first instanceof CharSequence) && !(first instanceof Number)
+                                    && !(first instanceof Boolean) && !(first instanceof Enum)) {
+                                EruptModel multiChoiceEruptModel = null;
+                                if (StringUtils.isNotBlank(fieldModel.getFieldReturnName())) {
+                                    multiChoiceEruptModel = EruptCoreService.getErupt(fieldModel.getFieldReturnName());
+                                }
+                                // fieldReturnName 可能仍为 List/Set（旧元数据或未覆盖 MULTI_CHOICE 时），从字段泛型取元素 @Erupt 名
+                                if (null == multiChoiceEruptModel) {
+                                    try {
+                                        List<String> gens = ReflectUtil.getFieldGenericName(field);
+                                        if (!gens.isEmpty()) {
+                                            multiChoiceEruptModel = EruptCoreService.getErupt(gens.get(0));
+                                        }
+                                    } catch (Exception ignored) {
+                                    }
+                                }
+                                if (null != multiChoiceEruptModel) {
+                                    primaryField = ReflectUtil.findClassField(first.getClass(),
+                                            multiChoiceEruptModel.getErupt().primaryKeyCol());
+                                }
+                            }
+                            for (Object o : multiChoiceCollection) {
+                                if (null == o) {
+                                    continue;
+                                }
+                                if (null != primaryField) {
+                                    Object idVal = primaryField.get(o);
+                                    if (null != idVal) {
+                                        valueSet.add(idVal.toString());
+                                    }
+                                } else {
+                                    valueSet.add(o.toString());
+                                }
+                            }
+                            map.put(field.getName(), valueSet);
+                        }
+                        break;
                     case TAB_TABLE_REFER:
                     case TAB_TABLE_ADD:
                         EruptModel tabEruptModelRef = EruptCoreService.getErupt(fieldModel.getFieldReturnName());

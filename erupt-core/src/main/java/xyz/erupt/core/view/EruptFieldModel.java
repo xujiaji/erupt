@@ -62,6 +62,8 @@ public class EruptFieldModel extends CloneSupport<EruptFieldModel> {
             case TAB_TABLE_ADD:
             case TAB_TABLE_REFER:
             case CHECKBOX:
+            // MULTI_CHOICE 多为 Collection<实体>，fieldReturnName 需为元素类型（如 OverseasSdkModule），否则会变成 List 导致无法解析主键与回填
+            case MULTI_CHOICE:
                 try {
                     this.fieldReturnName = ReflectUtil.getFieldGenericName(field).get(0);
                 } catch (Exception e) {
